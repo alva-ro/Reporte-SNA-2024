@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,10 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'app_reporte',
-<<<<<<< HEAD
-=======
     'rest_framework',
->>>>>>> 17b85ea ( endpoints para Comuna y Ciudad)
 ]
 
 MIDDLEWARE = [
@@ -81,17 +81,11 @@ WSGI_APPLICATION = 'reporte_sna_2024.wsgi.application'
 DATABASES = {
     "default": {
         'ENGINE': 'django.db.backends.postgresql',
-<<<<<<< HEAD
-        'NAME': 'sna_report',
-        'USER': 'postgres',
-        'PASSWORD': 'Qsvfh861',
-=======
-        'NAME': 'proyecto',
-        'USER': 'proyecto',
-        'PASSWORD': 'proyecto',
->>>>>>> 17b85ea ( endpoints para Comuna y Ciudad)
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME', 'sna_report'),
+        'USER': os.getenv('DB_USER', 'postgres'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+        'HOST': os.getenv('DB_HOST', 'postgres'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
