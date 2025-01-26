@@ -1,5 +1,9 @@
 from django.db import models
 
+from django.contrib import admin
+
+
+
 class PlanPPDA(models.Model):
     nombre = models.CharField(max_length=255)
     mes_reporte = models.IntegerField()

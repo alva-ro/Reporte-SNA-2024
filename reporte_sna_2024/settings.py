@@ -38,6 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'app_reporte',
+<<<<<<< HEAD
+=======
+    'rest_framework',
+>>>>>>> 17b85ea ( endpoints para Comuna y Ciudad)
 ]
 
 MIDDLEWARE = [
@@ -77,9 +81,15 @@ WSGI_APPLICATION = 'reporte_sna_2024.wsgi.application'
 DATABASES = {
     "default": {
         'ENGINE': 'django.db.backends.postgresql',
+<<<<<<< HEAD
         'NAME': 'sna_report',
         'USER': 'postgres',
         'PASSWORD': 'Qsvfh861',
+=======
+        'NAME': 'proyecto',
+        'USER': 'proyecto',
+        'PASSWORD': 'proyecto',
+>>>>>>> 17b85ea ( endpoints para Comuna y Ciudad)
         'HOST': 'localhost',
         'PORT': '5432',
     }
