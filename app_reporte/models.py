@@ -1,11 +1,16 @@
 from django.db import models
-
 from django.contrib import admin
 
-
-
 class PlanPPDA(models.Model):
-    nombre = models.CharField(max_length=255)
+    """
+    Representa el Plan de Prevención y Descontaminación Atmosférica que corresponde a cada comuna y región.
+    Campos:
+    - `nombre`: Nombre único del plan en donde se identifican las comunas correspondientes.
+    - `mes_reporte`: Mes en el que se debe reportar el avance.
+    - `anio`: Año del plan.
+    """
+
+    nombre = models.CharField(max_length=255, help_text="Ingrese el nombre único del Plan, identificando claramente las comunas que corresponden.")
     mes_reporte = models.IntegerField()
     anio = models.IntegerField()
 

@@ -42,7 +42,18 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'app_reporte',
     'rest_framework',
+    'drf_spectacular',
 ]
+
+REST_FRAMEWORK = {
+'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+'TITLE': 'API Indicadores y Métodos de Verificación SNA',
+'DESCRIPTION': 'Api creada para disponibilizar toda la información sobre indicadores de evaluación ambiental ordenada y filtrada para que los organismos responsables puedan usarla y entender los criterios e indicadores que deben reportar a la superintendencia.',
+'VERSION': '1.0.0',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
