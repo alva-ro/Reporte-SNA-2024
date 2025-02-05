@@ -52,6 +52,12 @@ Como miembro de la SEREMI del Medio Ambiente, quiero disponibilizar información
 - **Obtener comunas**: `GET /api/comunas/`
 - **Insertar comuna**: `POST /api/comunas/`
 
+- **Obtener ciudades**: `GET /api/ciudades/`
+- **Insertar ciudad**: `POST /api/ciudades/`
+
+- **Obtener regiones**: `GET /api/regiones/`
+- **Insertar región**: `POST /api/regiones/`
+
 - **Obtener planes PPDA**: `GET /api/planes/`
 - **Insertar plan PPDA**: `POST /api/planes/`
 

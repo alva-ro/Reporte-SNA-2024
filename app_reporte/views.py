@@ -2,18 +2,15 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import PlanPPDA, Comuna
-from .serializers import PlanPPDASerializer, ComunaSerializer
+from .models import PlanPPDA, Comuna, Ciudad, Region
+from .serializers import PlanPPDASerializer, ComunaSerializer, CiudadSerializer, RegionSerializer
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
-
+@extend_schema_view(
+    get=extend_schema(summary="Listar todas las comunas", tags=["Comunas"]),
+    post=extend_schema(summary="Crear una nueva comuna", tags=["Comunas"])
+)
 class ComunaView(APIView):
-    """
-    API para gestionar las comunas.
-
-    Endpoints:
-    - GET /comuna/: Listar todas las comunas.
-    - POST /comuna/: Crear una nueva comuna.
-    """
     def get(self, request):
         """
         Listar todas las comunas.
@@ -43,15 +40,11 @@ class ComunaView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+@extend_schema_view(
+    get=extend_schema(summary="Listar todos los planes PPDA", tags=["Planes PPDA"]),
+    post=extend_schema(summary="Crear un nuevo plan PPDA", tags=["Planes PPDA"])
+)
 class PlanPPDAView(APIView):
-    """
-    API para gestionar los planes PPDA.
-
-    Endpoints:
-    - GET /plan-ppda/: Listar todos los planes PPDA.
-    - POST /plan-ppda/: Crear un nuevo plan PPDA.
-    """
     def get(self, request):
         """
         Listar todos los planes PPDA.
@@ -76,6 +69,74 @@ class PlanPPDAView(APIView):
         - Errores de validación y código de estado HTTP 400 si la creación falla.
         """
         serializer = PlanPPDASerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@extend_schema_view(
+    get=extend_schema(summary="Listar todas las ciudades", tags=["Ciudades"]),
+    post=extend_schema(summary="Crear una nueva ciudad", tags=["Ciudades"])
+)
+class CiudadView(APIView):
+    def get(self, request):
+        """
+        Listar todas las ciudades.
+
+        Retorna:
+        - Lista de ciudades en formato JSON.
+        """
+        ciudades = Ciudad.objects.all()
+        serializer = CiudadSerializer(ciudades, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """
+        Crear una nueva ciudad.
+
+        Parámetros:
+        - request.data: Datos de la ciudad a crear.
+
+        Retorna:
+        - Datos de la ciudad creada en formato JSON.
+        - Código de estado HTTP 201 si la creación es exitosa.
+        - Errores de validación y código de estado HTTP 400 si la creación falla.
+        """
+        serializer = CiudadSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@extend_schema_view(
+    get=extend_schema(summary="Listar todas las regiones", tags=["Regiones"]),
+    post=extend_schema(summary="Crear una nueva región", tags=["Regiones"])
+)
+class RegionView(APIView):
+    def get(self, request):
+        """
+        Listar todas las regiones.
+
+        Retorna:
+        - Lista de comunas en formato JSON.
+        """
+        ciudades = Region.objects.all()
+        serializer = RegionSerializer(ciudades, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """
+        Crear una nueva región.
+
+        Parámetros:
+        - request.data: Datos de la región a crear.
+
+        Retorna:
+        - Datos de la Región creada en formato JSON.
+        - Código de estado HTTP 201 si la creación es exitosa.
+        - Errores de validación y código de estado HTTP 400 si la creación falla.
+        """
+        serializer = RegionSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
