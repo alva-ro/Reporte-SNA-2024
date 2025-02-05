@@ -2,14 +2,17 @@ from rest_framework import serializers
 from .models import (PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable, Medida, MedioVerificacion, Entidad,)
  
 
-class PlanPPDASerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PlanPPDA
-        fields = '__all__'
 
 class ComunaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comuna
+        fields = '__all__'
+
+class PlanPPDASerializer(serializers.ModelSerializer):
+    comunas = ComunaSerializer(many=True)
+
+    class Meta:
+        model = PlanPPDA
         fields = '__all__'
 
 class RegionSerializer(serializers.ModelSerializer):
