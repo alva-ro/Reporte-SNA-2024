@@ -5,7 +5,7 @@ Proyecto Python Backend desarrollado con Django Rest Framework para la disponibi
 
 ## Organización de Tareas
 Puedes ver el backlog y la organización de tareas en el siguiente enlace:
-[Taiga - Reporte SNA 2024](https://tree.taiga.io/project/paulyval-reporte-sna-2024/backlog)
+[Taiga - Reporte SNA 2024](https://tree.taiga.io/project/paulyval-reporte-sna-2024/epics)
 
 ## Historias de Usuario
 Nuestro proyecto se define a partir de la siguiente historia de usuario, la cual ayudó a definir y priorizar nuestras tareas.
