@@ -61,8 +61,17 @@ Como miembro de la SEREMI del Medio Ambiente, quiero disponibilizar información
 - **Obtener planes PPDA**: `GET /api/planes/`
 - **Insertar plan PPDA**: `POST /api/planes/`
 
+
 ## Disclaimer
 Estos primeros endpoints de esta API están diseñados para ser utilizados **únicamente de manera interna por los administradores**. Como siguiente paso, se planea implementar un sistema de **autenticación y autorización** basado en usuarios para garantizar la seguridad y el control de acceso a los recursos. Los endpoint ciudades y regiones fueron integrados para mantener la coherencia de datos.
+
+CRUD Organismos Responsables (OR) que participan de la implementación del PPDA:
+- **Obtener OR por Id**: `GET`
+- **Listar OR**: `GET`
+- **Eliminar OR**: `DELETE`
+- **Crear OR**: `POST`
+- **Actualizar OR**: `PUT `
+
 
 ---
 
