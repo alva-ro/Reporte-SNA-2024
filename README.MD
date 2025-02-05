@@ -5,7 +5,7 @@ Proyecto Python Backend desarrollado con Django Rest Framework para la disponibi
 
 ## Organización de Tareas
 Puedes ver el backlog y la organización de tareas en el siguiente enlace:
-[Taiga - Reporte SNA 2024](https://tree.taiga.io/project/paulyval-reporte-sna-2024/backlog)
+[Taiga - Reporte SNA 2024](https://tree.taiga.io/project/paulyval-reporte-sna-2024/epics)
 
 ## Historias de Usuario
 Nuestro proyecto se define a partir de la siguiente historia de usuario, la cual ayudó a definir y priorizar nuestras tareas.
@@ -52,11 +52,17 @@ Como miembro de la SEREMI del Medio Ambiente, quiero disponibilizar información
 - **Obtener comunas**: `GET /api/comunas/`
 - **Insertar comuna**: `POST /api/comunas/`
 
+- **Obtener ciudades**: `GET /api/ciudades/`
+- **Insertar ciudad**: `POST /api/ciudades/`
+
+- **Obtener regiones**: `GET /api/regiones/`
+- **Insertar región**: `POST /api/regiones/`
+
 - **Obtener planes PPDA**: `GET /api/planes/`
 - **Insertar plan PPDA**: `POST /api/planes/`
 
 ## Disclaimer
-Estos primeros endpoints de esta API están diseñados para ser utilizados **únicamente de manera interna por los administradores**. Como siguiente paso, se planea implementar un sistema de **autenticación y autorización** basado en usuarios para garantizar la seguridad y el control de acceso a los recursos.
+Estos primeros endpoints de esta API están diseñados para ser utilizados **únicamente de manera interna por los administradores**. Como siguiente paso, se planea implementar un sistema de **autenticación y autorización** basado en usuarios para garantizar la seguridad y el control de acceso a los recursos. Los endpoint ciudades y regiones fueron integrados para mantener la coherencia de datos.
 
 ---
 

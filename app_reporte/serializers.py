@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import (PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable, Medida, MedioVerificacion, Entidad,)
- 
 
 
 class ComunaSerializer(serializers.ModelSerializer):
