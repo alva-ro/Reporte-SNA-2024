@@ -3,10 +3,10 @@ from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable
 from .serializers import PlanPPDASerializer, ComunaSerializer, RegionSerializer, \
     CiudadSerializer, OrganismoResponsableSerializer
-from drf_spectacular.utils import extend_schema, extend_schema_view
 
 @extend_schema_view(
     get=extend_schema(summary="Listar todas las comunas", tags=["Comunas"]),
@@ -146,18 +146,18 @@ class CiudadView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    
-class OrganismoResponsableView(APIView):
-    """
-    API para operaciones CRUD sobre los Organismos Responsables.
 
-    Endpoints:
-    - GET /organismo-responsable/id: Lista detalles de un Organismo Responsable.
-    - POST /organismo-responsable/: Crear un nuevo Organismo Responsable.
-    - PUT /organismo-responsable/id: Actualiza campos de un Organismo Responsable
-    - DELETE /organismo-responsable/id: Elimina un Organismo Responsable, si no tiene dependencias
-    """
+@extend_schema_view(
+    get=extend_schema(summary="Listar detalles de un Organismo Responsable",
+                      tags=["Organismos Responsables"]),
+    post=extend_schema(summary="Crear un nuevo Organismo Responsable",
+                       tags=["Organismos Responsables"]),
+    put=extend_schema(summary="Actualizar un Organismo Responsable existente",
+                      tags=["Organismos Responsables"]),
+    delete=extend_schema(summary="Eliminar un Organismo Responsable existente",
+                         tags=["Organismos Responsables"])
+)
+class OrganismoResponsableView(APIView):
     def get(self, request, id_orgres):
         """
         Listar un Organismo Responsable y sus .
@@ -166,7 +166,7 @@ class OrganismoResponsableView(APIView):
         - Lista de planes PPDA en formato JSON.
         """
         org_res = OrganismoResponsable.objects.filter(id=id_orgres)
-        if not org_res:
+        if org_res is None:
             raise Http404
         serializer = OrganismoResponsableSerializer(org_res, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -202,18 +202,22 @@ class OrganismoResponsableView(APIView):
         - Errores de validación y código de estado HTTP 400 si la creación falla.
         """
         org_res = OrganismoResponsable.objects.filter(id=id_orgres).first()
-        if org_res == None:
+        if org_res is None:
             raise BadRequest("Recurso solicitado no existe")
         serializer = OrganismoResponsableSerializer(org_res, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def delete(self, request, id_orgres):
         org_res = OrganismoResponsable.objects.filter(id=id_orgres).delete()
         return Response([], status=status.HTTP_204_NO_CONTENT)
 
+@extend_schema_view(
+    get=extend_schema(summary="Listar todos los Organismos Responsables",
+        tags=["Organismos Responsables"]),
+)
 class OrganismosResponsablesView(APIView):
     """
     API para listar los Organismos Responsables.
