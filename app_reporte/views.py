@@ -166,7 +166,7 @@ class OrganismoResponsableView(APIView):
         - Lista de planes PPDA en formato JSON.
         """
         org_res = OrganismoResponsable.objects.filter(id=id_orgres)
-        if org_res is None:
+        if not org_res:
             raise Http404
         serializer = OrganismoResponsableSerializer(org_res, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -202,7 +202,7 @@ class OrganismoResponsableView(APIView):
         - Errores de validación y código de estado HTTP 400 si la creación falla.
         """
         org_res = OrganismoResponsable.objects.filter(id=id_orgres).first()
-        if org_res is None:
+        if not org_res:
             raise BadRequest("Recurso solicitado no existe")
         serializer = OrganismoResponsableSerializer(org_res, data=request.data)
         if serializer.is_valid():

@@ -8,7 +8,6 @@ class ComunaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class PlanPPDASerializer(serializers.ModelSerializer):
-    comunas = ComunaSerializer(many=True)
 
     class Meta:
         model = PlanPPDA
