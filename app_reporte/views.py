@@ -7,12 +7,15 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable
 from .serializers import PlanPPDASerializer, ComunaSerializer, RegionSerializer, \
     CiudadSerializer, OrganismoResponsableSerializer
+from rest_framework.permissions import IsAuthenticated
+
 
 @extend_schema_view(
     get=extend_schema(summary="Listar todas las comunas", tags=["Comunas"]),
     post=extend_schema(summary="Crear una nueva comuna", tags=["Comunas"])
 )
 class ComunaView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         """
         Listar todas las comunas.
