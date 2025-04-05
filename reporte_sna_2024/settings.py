@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-oifuh60mn&rv83fug*ekx*#xm$$wp^$#u=wh+bkp(e!dy2=zjt
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -93,9 +93,9 @@ DATABASES = {
     "default": {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('DB_NAME', 'sna_report'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-        'HOST': os.getenv('DB_HOST', 'postgres'),
+        'USER': os.getenv('DB_USER', 'corfo'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'corfo'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
@@ -141,3 +141,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+#Manejo de archivos
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
