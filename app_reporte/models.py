@@ -96,26 +96,50 @@ class Entidad(models.Model):
     def __str__(self):
         return self.nombre
 
-
 class Reporte(models.Model):
+    """
+    Modelo para representar el reporte que un organismo responsable sube como avance de un plan.
+
+    Consideraciones:
+    - Se utiliza FileField para almacenar el archivo real (pdf, imagen, texto, etc).
+    - Es necesario configurar MEDIA_URL y MEDIA_ROOT en settings.py para el manejo correcto de los archivos subidos.
+    - Para evitar duplicados o validar condiciones específicas se pueden agregar validaciones adicionales en el Serializer o a nivel de modelo.
+    """
     ESTADOS_REPORTE = [
         ('pendiente', 'Pendiente'),
         ('aprobado', 'Aprobado'),
         ('rechazado', 'Rechazado'),
     ]
-
-    medida = models.ForeignKey('Medida', on_delete=models.CASCADE)
-    organismo = models.ForeignKey('OrganismoResponsable', on_delete=models.CASCADE)
-    fecha_envio = models.DateField()
-    descripcion = models.TextField()
-    archivo_url = models.URLField()
-    medio_verificacion = models.ForeignKey('MedioVerificacion', null=True, blank=True, on_delete=models.SET_NULL)
+    medida = models.ForeignKey(
+        'Medida',
+        on_delete=models.CASCADE,
+        related_name='reportes'
+    )
+    organismo = models.ForeignKey(
+        'OrganismoResponsable',
+        on_delete=models.CASCADE,
+        related_name='reportes'
+    )
+    fecha_envio = models.DateField(auto_now_add=True)
+    descripcion = models.TextField(blank=True, null=True)
+    archivo = models.FileField(
+        upload_to='reportes/',
+        null=True,
+        blank=True,
+        help_text="Archivo subido (pdf, imagen, documento, etc)"
+    )
+    medio_verificacion = models.ForeignKey(
+        'MedioVerificacion',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reportes'
+    )
 
     estado = models.CharField(
         max_length=20,
         choices=ESTADOS_REPORTE,
         default='pendiente'
     )
-
     def __str__(self):
-        return f"Reporte {self.id} - {self.estado}"
+        return f"Reporte de {self.organismo} sobre {self.medida} - {self.fecha_envio}"
