@@ -1,6 +1,5 @@
 from django.urls import path
-from .views import PlanPPDAView, ComunaView, RegionView, CiudadView, OrganismoResponsableView, OrganismosResponsablesView
-
+from .views import PlanPPDAView, ComunaView, RegionView, CiudadView, OrganismoResponsableView, OrganismosResponsablesView, ReporteListView, ReporteEstadoUpdateView
 urlpatterns = [
     path('planes/', PlanPPDAView.as_view(), name='planes'),
     path('comunas/', ComunaView.as_view(), name='comunas'),
@@ -9,5 +8,9 @@ urlpatterns = [
     path('organismo-responsable/<int:id_orgres>', OrganismoResponsableView.as_view(http_method_names=['get', 'put', 'delete']), name='organismo-responsable'),
     path('organismo-responsable/', OrganismoResponsableView.as_view(http_method_names=['post']), name='organismo-responsable'),
     path('organismos-responsables/', OrganismosResponsablesView.as_view(), name='organismos-responsables'),
+    path('reportes/', ReporteListView.as_view(), name='reportes'),
+    path('reportes/<int:id_reporte>/estado/', ReporteEstadoUpdateView.as_view(), name='actualizar-estado-reporte'),
+
+
 ]
 

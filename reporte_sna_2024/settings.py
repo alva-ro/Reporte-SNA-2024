@@ -45,9 +45,6 @@ INSTALLED_APPS = [
     'drf_spectacular',
 ]
 
-REST_FRAMEWORK = {
-'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-}
 
 SPECTACULAR_SETTINGS = {
 'TITLE': 'API Indicadores y Métodos de Verificación SNA',
@@ -89,7 +86,7 @@ WSGI_APPLICATION = 'reporte_sna_2024.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
+""" DATABASES = {
     "default": {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('DB_NAME', 'sna_report'),
@@ -98,7 +95,15 @@ DATABASES = {
         'HOST': os.getenv('DB_HOST', 'postgres'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
+} """
+
+DATABASES = {
+    "default": {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / "db_dev_local.sqlite3",
+    }
 }
+
 
 
 # Password validation
@@ -141,3 +146,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
