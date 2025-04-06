@@ -155,3 +155,27 @@ class Entidad(models.Model):
 
     def __str__(self):
         return self.nombre
+
+
+class Reporte(models.Model):
+    ESTADOS_REPORTE = [
+        ('pendiente', 'Pendiente'),
+        ('aprobado', 'Aprobado'),
+        ('rechazado', 'Rechazado'),
+    ]
+
+    medida = models.ForeignKey('Medida', on_delete=models.CASCADE)
+    organismo = models.ForeignKey('OrganismoResponsable', on_delete=models.CASCADE)
+    fecha_envio = models.DateField()
+    descripcion = models.TextField()
+    archivo_url = models.URLField()
+    medio_verificacion = models.ForeignKey('MedioVerificacion', null=True, blank=True, on_delete=models.SET_NULL)
+
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADOS_REPORTE,
+        default='pendiente'
+    )
+
+    def __str__(self):
+        return f"Reporte {self.id} - {self.estado}"

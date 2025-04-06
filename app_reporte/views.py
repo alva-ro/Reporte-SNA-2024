@@ -2,17 +2,22 @@ from django.core.exceptions import BadRequest
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, filters
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable
 from .serializers import PlanPPDASerializer, ComunaSerializer, RegionSerializer, \
     CiudadSerializer, OrganismoResponsableSerializer
+from .models import Reporte
+from .serializers import ReporteSerializer
+from rest_framework.permissions import IsAdminUser
+
 
 @extend_schema_view(
     get=extend_schema(summary="Listar todas las comunas", tags=["Comunas"]),
     post=extend_schema(summary="Crear una nueva comuna", tags=["Comunas"], request=ComunaSerializer),
 )
 class ComunaView(APIView):
+    serializer_class = ComunaSerializer
     def get(self, request):
         """
         Listar todas las comunas.
@@ -91,6 +96,7 @@ class ComunaDetailView(APIView):
     post=extend_schema(summary="Crear un nuevo plan PPDA", tags=["Planes PPDA"], request=PlanPPDASerializer)
 )
 class PlanPPDAView(APIView):
+    serializer_class = PlanPPDASerializer
     def get(self, request):
         """
         Listar todos los planes PPDA.
@@ -211,6 +217,7 @@ class RegionDetailView(APIView):
     post=extend_schema(summary="Crear una nueva región", tags=["Regiones"], request=RegionSerializer)
 )
 class RegionView(APIView):
+    serializer_class = RegionSerializer
     def get(self, request):
         """Listar todas las regiones"""
         regiones = Region.objects.all()
@@ -241,6 +248,7 @@ class RegionView(APIView):
     post=extend_schema(summary="Crear una nueva ciudad", tags=["Ciudades"], request=CiudadSerializer)
 )
 class CiudadView(APIView):
+    serializer_class = CiudadSerializer
     def get(self, request):
         """
         Listar todas las ciudades.
@@ -402,3 +410,70 @@ class OrganismoResponsableView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+"""
+    Lista reportes
+"""
+@extend_schema_view(
+    get=extend_schema(
+        summary="Listar reportes",
+        description="Permite listar reportes con filtros por organismo, estado y fecha de envío",
+        tags=["Reportes"]
+    )
+)
+class ReporteListView(APIView):
+    serializer_class = ReporteSerializer
+    permission_classes = [IsAdminUser]
+    def get(self, request):
+        queryset = Reporte.objects.all()
+
+        organismo_id = request.GET.get('organismo')
+        estado = request.GET.get('estado')
+        fecha_envio = request.GET.get('fecha_envio')
+
+        if organismo_id:
+            queryset = queryset.filter(organismo_id=organismo_id)
+        if estado:
+            queryset = queryset.filter(estado=estado)
+        if fecha_envio:
+            queryset = queryset.filter(fecha_envio=fecha_envio)
+
+        serializer = ReporteSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+"""
+    Actualizar el estado de un reporte a "aprobado", "rechazado" o "pendiente".
+"""
+@extend_schema_view(
+    put=extend_schema(
+        summary="Modificar estado de un reporte",
+        description="Permite cambiar el estado de un reporte a aprobado, rechazado o pendiente",
+        tags=["Reportes"]
+    )
+)
+class ReporteEstadoUpdateView(APIView):
+    serializer_class = ReporteSerializer
+    permission_classes = [IsAdminUser]
+
+    def put(self, request, id_reporte):
+        try:
+            reporte = Reporte.objects.get(id=id_reporte)
+        except Reporte.DoesNotExist:
+            return Response({"error": "Reporte no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+        nuevo_estado = request.data.get("estado")
+        if nuevo_estado not in ["pendiente", "aprobado", "rechazado"]:
+            return Response({"error": "Estado inválido"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if nuevo_estado == reporte.estado:
+            return Response(
+                {"detail": "El reporte ya tiene ese estado."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        reporte.estado = nuevo_estado
+        reporte.save()
+
+        serializer = ReporteSerializer(reporte)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+

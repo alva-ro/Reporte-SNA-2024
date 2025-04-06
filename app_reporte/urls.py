@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import PlanPPDAView, ComunaView, RegionView, CiudadView, OrganismoResponsableView, RegionDetailView, CiudadDetailView, ComunaDetailView, OrganismoResponsableDetailView, PlanPPDADetailView
+from .views import PlanPPDAView, ComunaView, RegionView, CiudadView, OrganismoResponsableView, RegionDetailView, CiudadDetailView, ComunaDetailView, OrganismoResponsableDetailView, PlanPPDADetailView, ReporteEstadoUpdateView, ReporteListView
 
 urlpatterns = [
     path('planes/', PlanPPDAView.as_view(http_method_names=['post', 'get']), name='planes'),
@@ -11,6 +11,7 @@ urlpatterns = [
     path('ciudades/', CiudadView.as_view(http_method_names=['post', 'get']), name='ciudades'),
     path('ciudades/<int:pk>/', CiudadDetailView.as_view(http_method_names=['get', 'put', 'delete']), name='ciudades'),
     path('organismo-responsable/<int:pk>/', OrganismoResponsableDetailView.as_view(http_method_names=['get', 'put', 'delete']), name='organismo-responsable'),
-    path('organismo-responsable/', OrganismoResponsableView.as_view(http_method_names=['post', 'get']), name='organismo-responsable')
+    path('organismo-responsable/', OrganismoResponsableView.as_view(http_method_names=['post', 'get']), name='organismo-responsable'),
+    path('reportes/', ReporteListView.as_view(), name='reportes'),
+    path('reportes/<int:id_reporte>/estado/', ReporteEstadoUpdateView.as_view(), name='actualizar-estado-reporte')
 ]
-

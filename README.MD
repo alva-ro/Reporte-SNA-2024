@@ -55,7 +55,8 @@ En esta segunda entrega nuestro foco principal fue integrar seguridad a nuestros
 ### **Próximos pasos**
 1. Documentar el proceso de autenticación y autorización para los administradores.
 2. Crear nuevos endpoints para mejorar las opciones de filtrados.
-3. Integrar rate limiting
+3. Integrar rate limiting.
+4. Fortacer validaciones en endpoints críticos.
 
 
 Para más detalles, consulta la documentación en:
