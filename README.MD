@@ -5,19 +5,10 @@ Proyecto Python Backend desarrollado con Django Rest Framework para la disponibi
 
 ## Organización de Tareas
 Puedes ver el backlog y la organización de tareas en el siguiente enlace:
-[Taiga - Reporte SNA 2024](https://tree.taiga.io/project/paulyval-reporte-sna-2024/epics)
+[Taiga Epics - Reporte SNA 2024](https://tree.taiga.io/project/paulyval-reporte-sna-2024/epics)
 
 ## Historias de Usuario
-Nuestro proyecto se define a partir de la siguiente historia de usuario, la cual ayudó a definir y priorizar nuestras tareas.
-
-### Disponibilización de Indicadores y Métodos de Verificación
-
-**Descripción:**  
-Como miembro de la SEREMI del Medio Ambiente, quiero disponibilizar información sobre indicadores de evaluación ambiental **ordenada y filtrada** para que los organismos responsables puedan usarla y entender los criterios e indicadores que deben reportar a la superintendencia.
-
-**Criterios de Aceptación:**
-- La información sobre indicadores y criterios está organizada y disponible en un formato accesible.
-- Los filtros permiten obtener datos específicos según la región o tipo de medida.
+Las historias de usuario y criterios de aceptación puedes verlo en [Taiga Backlog - Reporte SNA 2024](https://tree.taiga.io/project/paulyval-reporte-sna-2024/backlog).
 
 ## Tecnologías Utilizadas
 - **Python**
@@ -49,37 +40,22 @@ Como miembro de la SEREMI del Medio Ambiente, quiero disponibilizar información
    ```
 
 ## API Endpoints Principales
-- **Obtener comunas**: `GET /api/comunas/`
-- **Insertar comuna**: `POST /api/comunas/`
-
-- **Obtener ciudades**: `GET /api/ciudades/`
-- **Insertar ciudad**: `POST /api/ciudades/`
-
-- **Obtener regiones**: `GET /api/regiones/`
-- **Insertar región**: `POST /api/regiones/`
-
-- **Obtener planes PPDA**: `GET /api/planes/`
-- **Insertar plan PPDA**: `POST /api/planes/`
+- **comunas**: `/api/comunas/`
+- **ciudades**: `/api/ciudades/`
+- **organismos responsales**: `/api/organismo-responsable/`
+- **planes ppda**: `/api/planes/`
+- **regiones**: `/api/regiones/`
 
 
-## Disclaimer
-Estos primeros endpoints de esta API están diseñados para ser utilizados **únicamente de manera interna por los administradores**. Como siguiente paso, se planea implementar un sistema de **autenticación y autorización** basado en usuarios para garantizar la seguridad y el control de acceso a los recursos. Los endpoint ciudades y regiones fueron integrados para mantener la coherencia de datos.
-
-CRUD Organismos Responsables (OR) que participan de la implementación del PPDA:
-- **Obtener OR por Id**: `GET`
-- **Listar OR**: `GET`
-- **Eliminar OR**: `DELETE`
-- **Crear OR**: `POST`
-- **Actualizar OR**: `PUT `
-
+## Información entrega 2
+En esta segunda entrega nuestro foco principal fue integrar seguridad a nuestros endpoints a través de token JWT, asignando roles y permisos para controlar los accesos. 
 
 ---
 
 ### **Próximos pasos**
-1. Implementar autenticación basada en tokens.
-2. Añadir roles y permisos para controlar el acceso a los endpoints.
-3. Documentar el proceso de autenticación y autorización para los administradores.
-4. Crear nuevos endpoints para filtrar planes por región, comuna y organismos responsables.
+1. Documentar el proceso de autenticación y autorización para los administradores.
+2. Crear nuevos endpoints para mejorar las opciones de filtrados.
+3. Integrar rate limiting
 
 
 Para más detalles, consulta la documentación en:
