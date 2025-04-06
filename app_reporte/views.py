@@ -6,7 +6,10 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable
 from .serializers import PlanPPDASerializer, ComunaSerializer, RegionSerializer, \
-    CiudadSerializer, OrganismoResponsableSerializer
+    CiudadSerializer, OrganismoResponsableSerializer,ReporteAnualSerializer
+from rest_framework import generics
+from .models import PlanPPDA, Region, Ciudad, Comuna, OrganismoResponsable, Medida, MedioVerificacion, Entidad, ReporteAnual
+
 
 @extend_schema_view(
     get=extend_schema(summary="Listar todas las comunas", tags=["Comunas"]),
@@ -235,3 +238,13 @@ class OrganismosResponsablesView(APIView):
         planes = OrganismoResponsable.objects.all()
         serializer = OrganismoResponsableSerializer(planes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class ReporteAnualList(generics.ListAPIView):
+    queryset = ReporteAnual.objects.all()
+    serializer_class = ReporteAnualSerializer
+    permission_classes = []
+
+class ReporteAnualDetail(generics.RetrieveAPIView):
+    queryset = ReporteAnual.objects.all()
+    serializer_class = ReporteAnualSerializer
+    permission_classes = []

@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import (PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable, Medida, MedioVerificacion, Entidad,)
+from .models import (PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable, Medida, MedioVerificacion, Entidad,ReporteAnual,)
+from .models import PlanPPDA, Region, Ciudad, Comuna, OrganismoResponsable, Medida, MedioVerificacion, Entidad, ReporteAnual
 
 
 class ComunaSerializer(serializers.ModelSerializer):
@@ -41,4 +42,9 @@ class MedioVerificacionSerializer(serializers.ModelSerializer):
 class EntidadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Entidad
+        fields = '__all__'
+
+class ReporteAnualSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReporteAnual
         fields = '__all__'

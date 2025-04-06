@@ -95,3 +95,11 @@ class Entidad(models.Model):
 
     def __str__(self):
         return self.nombre
+
+
+class ReporteAnual(models.Model):
+    fecha_reporte = models.DateField()
+    plan_asociado = models.ForeignKey('PlanPPDA', on_delete=models.CASCADE, related_name='reportes_anuales')
+
+    def __str__(self):
+        return f"Reporte {self.id} - {self.fecha_reporte}"
