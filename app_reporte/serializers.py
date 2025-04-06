@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import (PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable, Medida, MedioVerificacion, Entidad,)
+from datetime import datetime
 
 
 class ComunaSerializer(serializers.ModelSerializer):
@@ -8,10 +9,58 @@ class ComunaSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class PlanPPDASerializer(serializers.ModelSerializer):
+    mes_reporte = serializers.IntegerField(
+        min_value=1,
+        max_value=12,
+        help_text="Mes del reporte (1-12)"
+    )
+    
+    anio = serializers.IntegerField(
+        min_value=2000,
+        max_value= datetime.now().year + 1,
+        help_text=f"Año del reporte (2000-{datetime.now().year + 1})"
+    )
+    
+    comunas = serializers.PrimaryKeyRelatedField(
+        required = False,
+        many=True,
+        queryset = Comuna.objects.all()
+    )
 
     class Meta:
         model = PlanPPDA
         fields = '__all__'
+        extra_kwargs = {
+            'id': {'read_only': True}
+        }
+
+    def validate(self, data):
+        current_year = datetime.now().year
+        current_month = datetime.now().month
+        
+        if data['anio'] == current_year and data['mes_reporte'] > current_month:
+            raise serializers.ValidationError(
+                "El mes del reporte no puede ser futuro para el año actual"
+            )
+        
+        return data
+    
+    def validate_comunas(self, value):
+        """Valida que las comunas existan"""
+        if not value:
+            raise serializers.ValidationError("Debe especificar al menos una comuna")
+        return value
+
+    def update(self, instance, validated_data):
+        """Maneja la actualización de las comunas"""
+        comunas_data = validated_data.pop('comunas', None)
+        
+        instance = super().update(instance, validated_data)
+        
+        if comunas_data is not None:
+            instance.comunas.set(comunas_data)
+        
+        return instance
 
 class RegionSerializer(serializers.ModelSerializer):
     class Meta:
