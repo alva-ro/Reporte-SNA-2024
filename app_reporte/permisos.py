@@ -54,4 +54,4 @@ class EsSuperAdminOSoloLectura(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        return request.user and request.user.is_superadmin
+        return request.user and request.user.is_superuser
