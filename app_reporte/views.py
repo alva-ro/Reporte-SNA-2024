@@ -11,7 +11,8 @@ from .serializers import PlanPPDASerializer, ComunaSerializer, RegionSerializer,
     CiudadSerializer, OrganismoResponsableSerializer, MedidaSerializer, MedioVerificacionSerializer, EntidadSerializer, ReporteSerializer
 from .models import Reporte
 from .serializers import ReporteSerializer
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from app_reporte.permisos import EsRepOrgResOSoloLectura, EsSuperAdminOSoloLectura, EsAdminOSoloLectura
 
 
 @extend_schema_view(
@@ -20,6 +21,7 @@ from rest_framework.permissions import IsAdminUser
 )
 class ComunaView(APIView):
     serializer_class = ComunaSerializer
+    permission_classes=[EsSuperAdminOSoloLectura]
     def get(self, request):
         """
         Listar todas las comunas.
@@ -55,7 +57,10 @@ class ComunaView(APIView):
     delete=extend_schema(summary="Eliminar una comuna por su id",tags=["Comunas"] )
 )
 class ComunaDetailView(APIView):
+    
+    permission_classes=[EsSuperAdminOSoloLectura]
     def put(self, request, pk):
+        
         """Actualizar comuna"""
         try:
             comuna = Comuna.objects.get(pk=pk)
@@ -97,6 +102,7 @@ class ComunaDetailView(APIView):
 )
 class PlanPPDAView(APIView):
     serializer_class = PlanPPDASerializer
+    permission_classes=[EsAdminOSoloLectura]
     def get(self, request):
         """
         Listar todos los planes PPDA.
@@ -132,6 +138,7 @@ class PlanPPDAView(APIView):
     delete=extend_schema(summary="Eliminar un plan PPDA a través de su id",tags=["Planes PPDA"] )
 )
 class PlanPPDADetailView(APIView):    
+    permission_classes=[EsAdminOSoloLectura]
     def put(self, request, pk):
         """Actualizar un plan PPDA"""
         try:
@@ -175,6 +182,7 @@ class PlanPPDADetailView(APIView):
     delete=extend_schema(summary="Eliminar una región a través de su id",tags=["Regiones"] )
 )
 class RegionDetailView(APIView):    
+    permission_classes=[EsSuperAdminOSoloLectura]
     def put(self, request, pk):
         """Actualizar región"""
         try:
@@ -218,6 +226,7 @@ class RegionDetailView(APIView):
 )
 class RegionView(APIView):
     serializer_class = RegionSerializer
+    permission_classes=[EsSuperAdminOSoloLectura]
     def get(self, request):
         """Listar todas las regiones"""
         regiones = Region.objects.all()
@@ -249,6 +258,7 @@ class RegionView(APIView):
 )
 class CiudadView(APIView):
     serializer_class = CiudadSerializer
+    permission_classes=[EsSuperAdminOSoloLectura]
     def get(self, request):
         """
         Listar todas las ciudades.
@@ -284,7 +294,8 @@ class CiudadView(APIView):
     put= extend_schema(summary="Modificar una ciudad existente a través de su id", tags=["Ciudades"]),
     delete=extend_schema(summary="Eliminar una ciudad a través de su id",tags=["Ciudades"] )
 )
-class CiudadDetailView(APIView):    
+class CiudadDetailView(APIView):  
+    permission_classes=[EsSuperAdminOSoloLectura]  
     def put(self, request, pk):
         """Actualizar ciudad"""
         try:
@@ -332,6 +343,7 @@ class CiudadDetailView(APIView):
                          tags=["Organismos Responsables"])
 )
 class OrganismoResponsableDetailView(APIView):
+    permission_classes=[EsAdminOSoloLectura]
     def put(self, request, pk):
         """Actualizar organismo responsable"""
         try:
@@ -382,6 +394,7 @@ class OrganismoResponsableView(APIView):
     Endpoints:
     - GET /organismos-responsables/: Listar Organismos Responsables.
     """
+    permission_classes = [EsRepOrgResOSoloLectura]
     def get(self, request):
         """
         Listar Organismos Responsables.
@@ -394,6 +407,7 @@ class OrganismoResponsableView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request):
+
         """
         Crear un nuevo Organismo Responsable.
 
@@ -410,7 +424,6 @@ class OrganismoResponsableView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 """
     Lista reportes
 """
@@ -423,7 +436,7 @@ class OrganismoResponsableView(APIView):
 )
 class ReporteListView(APIView):
     serializer_class = ReporteSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [EsRepOrgResOSoloLectura]
     def get(self, request):
         queryset = Reporte.objects.all()
 
@@ -441,9 +454,6 @@ class ReporteListView(APIView):
         serializer = ReporteSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-"""
-    Actualizar el estado de un reporte a "aprobado", "rechazado" o "pendiente".
-"""
 @extend_schema_view(
     put=extend_schema(
         summary="Modificar estado de un reporte",
@@ -452,10 +462,18 @@ class ReporteListView(APIView):
     )
 )
 class ReporteEstadoUpdateView(APIView):
+    
+    """
+        Permite actualizar el estado de un reporte a "aprobado", "rechazado" o "pendiente".
+    """
     serializer_class = ReporteSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [EsAdminOSoloLectura]
 
     def put(self, request, id_reporte):
+        
+        """
+            Permite actualizar el estado de un reporte a "aprobado", "rechazado" o "pendiente".
+        """
         try:
             reporte = Reporte.objects.get(id=id_reporte)
         except Reporte.DoesNotExist:
@@ -489,6 +507,8 @@ class ReportesView(APIView):
     """
     def get(self, request):
         reportes = Reporte.objects.all()
+        if not reportes:
+            return Http404()
         serializer = ReporteSerializer(reportes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -521,6 +541,7 @@ class ReporteView(APIView):
     """
     #permitir el manejo de archivos en la petición
     parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [EsAdminOSoloLectura]
 
     def post(self, request):
         serializer = ReporteSerializer(data=request.data)
@@ -559,6 +580,7 @@ class ReporteView(APIView):
 )
 class MedidaView(APIView):
     serializer_class = MedidaSerializer
+    permission_classes = [EsRepOrgResOSoloLectura]
     def get(self, request):
         """
         Listar todas las medidas.
@@ -594,6 +616,7 @@ class MedidaView(APIView):
     delete=extend_schema(summary="Eliminar una medidas por su id",tags=["Medidas"] )
 )
 class MedidaDetailView(APIView):
+    permission_classes = [EsAdminOSoloLectura]
     def put(self, request, pk):
         """Actualizar medidas"""
         try:
