@@ -541,7 +541,7 @@ class ReporteView(APIView):
     """
     #permitir el manejo de archivos en la petición
     parser_classes = (MultiPartParser, FormParser)
-    permission_classes = [EsAdminOSoloLectura]
+    permission_classes = [EsRepOrgResOSoloLectura]
 
     def post(self, request):
         serializer = ReporteSerializer(data=request.data)
