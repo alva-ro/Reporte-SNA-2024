@@ -10,8 +10,13 @@ class PlanPPDA(models.Model):
     - `anio`: Año del plan.
     """
 
-    nombre = models.CharField(max_length=255, help_text="Ingrese el nombre único del Plan, identificando claramente las comunas que corresponden.")
-    mes_reporte = models.IntegerField()
+    nombre = models.CharField(
+        max_length=255,
+        help_text="Ingrese el nombre único del Plan, identificando claramente las comunas que corresponden."
+        )
+    mes_reporte = models.IntegerField(
+        help_text="Ingrese un valor"
+    )
     anio = models.IntegerField()
 
     comunas = models.ManyToManyField('Comuna', related_name='planes')
@@ -20,12 +25,25 @@ class PlanPPDA(models.Model):
         return self.nombre
 
 class Region(models.Model):
+    """
+    Representa una región administrativa del país.
+
+    Atributos:
+        nombre (str): Nombre de la región.
+    """
     nombre = models.CharField(max_length=255)
 
     def __str__(self):
         return self.nombre
 
 class Ciudad(models.Model):
+    """
+    Representa una ciudad que pertenece a una región.
+
+    Atributos:
+        nombre (str): Nombre de la ciudad.
+        region (ForeignKey): Región a la que pertenece la ciudad.
+    """
     nombre = models.CharField(max_length=255)
     region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="ciudades")
 
@@ -33,6 +51,13 @@ class Ciudad(models.Model):
         return self.nombre
 
 class Comuna(models.Model):
+    """
+    Representa una comuna dentro de una ciudad.
+
+    Atributos:
+        nombre (str): Nombre de la comuna.
+        ciudad (ForeignKey): Ciudad a la que pertenece la comuna.
+    """
     nombre = models.CharField(max_length=255)
     ciudad = models.ForeignKey('Ciudad', on_delete=models.CASCADE, related_name='comunas') 
 
@@ -40,12 +65,32 @@ class Comuna(models.Model):
         return self.nombre
 
 class OrganismoResponsable(models.Model):
+    """
+    Representa un organismo responsable de implementar o verificar medidas del plan.
+
+    Atributos:
+        nombre (str): Nombre del organismo.
+    """
     nombre = models.CharField(max_length=255)
 
     def __str__(self):
         return self.nombre
 
 class Medida(models.Model):
+    """
+    Representa una medida contenida en el plan PPDA.
+
+    Atributos:
+        referencia_pda (str): Código o referencia del plan en el que se enmarca la medida.
+        nombre_corto (str): Nombre breve que identifica la medida.
+        descripcion (str): Descripción detallada de la medida.
+        indicador (str): Indicador que permite evaluar el cumplimiento de la medida.
+        formula_calculo (str): Fórmula usada para calcular el indicador.
+        frecuencia_reporte (str): Frecuencia con la que se debe reportar la medida.
+        tipo_medida (str): Indica si es una medida regulatoria o no regulatoria.
+        plazo (date): Fecha límite para la ejecución de la medida.
+        organismos (ManyToMany): Organismos responsables de la medida.
+    """
     FRECUENCIA_CHOICES = [
         ('anual', 'Anual'),
         ('unica', 'Única'),
@@ -72,6 +117,15 @@ class Medida(models.Model):
         return self.nombre_corto
 
 class MedioVerificacion(models.Model):
+    """
+    Representa el medio por el cual se verifica el cumplimiento de una medida.
+
+    Atributos:
+        descripcion (str): Descripción del medio de verificación.
+        tipo (str): Tipo del medio (informe, fotografía, oficio, etc.).
+        medida (ForeignKey): Medida a la que pertenece este medio.
+        entidad_a_cargo (ForeignKey): Entidad responsable de proporcionar el medio de verificación.
+    """
     TIPO_MEDIO_CHOICES = [
         ('informe_anual', 'Informe Anual'),
         ('documento_excel', 'Documento Excel'),
@@ -91,7 +145,61 @@ class MedioVerificacion(models.Model):
         return self.descripcion
 
 class Entidad(models.Model):
+    """
+    Representa una entidad institucional que puede estar a cargo de medios de verificación.
+
+    Atributos:
+        nombre (str): Nombre de la entidad.
+    """
     nombre = models.CharField(max_length=255)
 
     def __str__(self):
         return self.nombre
+
+class Reporte(models.Model):
+    """
+    Modelo para representar el reporte que un organismo responsable sube como avance de un plan.
+
+    Consideraciones:
+    - Se utiliza FileField para almacenar el archivo real (pdf, imagen, texto, etc).
+    - Es necesario configurar MEDIA_URL y MEDIA_ROOT en settings.py para el manejo correcto de los archivos subidos.
+    - Para evitar duplicados o validar condiciones específicas se pueden agregar validaciones adicionales en el Serializer o a nivel de modelo.
+    """
+    ESTADOS_REPORTE = [
+        ('pendiente', 'Pendiente'),
+        ('aprobado', 'Aprobado'),
+        ('rechazado', 'Rechazado'),
+    ]
+    medida = models.ForeignKey(
+        'Medida',
+        on_delete=models.CASCADE,
+        related_name='reportes'
+    )
+    organismo = models.ForeignKey(
+        'OrganismoResponsable',
+        on_delete=models.CASCADE,
+        related_name='reportes'
+    )
+    fecha_envio = models.DateField(auto_now_add=True)
+    descripcion = models.TextField(blank=True, null=True)
+    archivo = models.FileField(
+        upload_to='reportes/',
+        null=True,
+        blank=True,
+        help_text="Archivo subido (pdf, imagen, documento, etc)"
+    )
+    medio_verificacion = models.ForeignKey(
+        'MedioVerificacion',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reportes'
+    )
+
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADOS_REPORTE,
+        default='pendiente'
+    )
+    def __str__(self):
+        return f"Reporte de {self.organismo} sobre {self.medida} - {self.fecha_envio}"

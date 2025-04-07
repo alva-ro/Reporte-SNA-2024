@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-oifuh60mn&rv83fug*ekx*#xm$$wp^$#u=wh+bkp(e!dy2=zjt
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -45,9 +45,6 @@ INSTALLED_APPS = [
     'drf_spectacular',
 ]
 
-REST_FRAMEWORK = {
-'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-}
 
 SPECTACULAR_SETTINGS = {
 'TITLE': 'API Indicadores y Métodos de Verificación SNA',
@@ -98,8 +95,7 @@ DATABASES = {
         'HOST': os.getenv('DB_HOST', 'postgres'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
-}
-
+} 
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -141,3 +137,13 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+#Manejo de archivos
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
