@@ -1,4 +1,4 @@
-from django.core.exceptions import BadRequest
+from django.core.exceptions import BadRequest, ValidationError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
@@ -102,49 +102,45 @@ class ComunaView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 @extend_schema_view(
-    get=extend_schema(summary="Obtener una comuna por id", tags=["Comunas"]),
-    put= extend_schema(summary="Modificar una comuna existente por su id", tags=["Comunas"]),
-    delete=extend_schema(summary="Eliminar una comuna por su id",tags=["Comunas"] )
+    get=extend_schema(summary="Obtener una comuna a través de su id", tags=["Comunas"]),
+    put=extend_schema(summary="Modificar una comuna existente a través de su id", tags=["Comunas"]),
+    delete=extend_schema(summary="Eliminar una comuna a través de su id", tags=["Comunas"])
 )
 class ComunaDetailView(APIView):
-    
+    serializer_class = ComunaSerializer
     permission_classes=[EsSuperAdminOSoloLectura]
-    def put(self, request, pk):
-        """Actualizar comuna"""
-        try:
-            comuna = Comuna.objects.get(pk=pk)
-        except Comuna.DoesNotExist:
-            return Response(
-            {"error": "Comuna no encontrada"}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
     
+    def get(self, request, pk=None):
+        if not pk:
+            raise BadRequest("Se requiere un ID de comuna para esta operacion.")
+        comuna = get_object_or_404(Comuna, id=pk)
+        serializer = ComunaSerializer(comuna)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk=None):
+        if not pk:
+            raise BadRequest("Se requiere un ID de comuna para esta operacion.")
+        comuna = get_object_or_404(Comuna, id=pk)
         serializer = ComunaSerializer(comuna, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def get(self, request, pk):
-        """Obtener una Comuna por su id"""
-        try:
-            comuna = Comuna.objects.get(pk=pk)
-            serializer = ComunaSerializer(comuna)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except Comuna.DoesNotExist:
-            raise Http404("Comuna no encontrada")
-    
-    def delete(self,request, pk):
-        """Eliminar comuna"""
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk=None):
+        if not pk:
+            raise BadRequest("Se requiere un ID de comuna para esta operacion.")
+        comuna = get_object_or_404(Comuna, id=pk)
+        
         try:
-            comuna = Comuna.objects.get(pk=pk)
             comuna.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        except Comuna.DoesNotExist:
+        except ValidationError as e:
             return Response(
-            {"error": "Comuna no encontrada"}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 @extend_schema_view(
     get=extend_schema(summary="Listar todos los planes PPDA", tags=["Planes PPDA"]),
     post=extend_schema(summary="Crear un nuevo plan PPDA", tags=["Planes PPDA"], request=PlanPPDASerializer)
@@ -274,8 +270,14 @@ class PlanPPDADetailView(APIView):
         """Eliminar un plan PPDA"""
         try:
             planPPDA = PlanPPDA.objects.get(pk=pk)
-            planPPDA.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            try:
+                planPPDA.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            except ValidationError as e:
+                return Response(
+                    {"error": "No se puede eliminar este plan porque tiene medidas asociadas. Primero debe eliminar o reasignar las medidas."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         except PlanPPDA.DoesNotExist:
             return Response(
             {"error": "Plan PPDA no encontrada"}, 
@@ -318,8 +320,14 @@ class RegionDetailView(APIView):
         """Eliminar región"""
         try:
             region = Region.objects.get(pk=pk)
-            region.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            try:
+                region.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            except ValidationError as e:
+                return Response(
+                    {"error": "No se puede eliminar esta región porque tiene ciudades asociadas. Primero debe eliminar o reasignar las ciudades."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         except Region.DoesNotExist:
             return Response(
             {"error": "Región no encontrada"}, 
@@ -495,11 +503,17 @@ class CiudadDetailView(APIView):
             raise Http404("Ciudad no encontrada")
     
     def delete(self,request, pk):
-        """Eliminar ciudad"""
+        """Eliminar una ciudad"""
         try:
             ciudad = Ciudad.objects.get(pk=pk)
-            ciudad.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            try:
+                ciudad.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            except ValidationError as e:
+                return Response(
+                    {"error": "No se puede eliminar esta ciudad porque tiene comunas asociadas. Primero debe eliminar o reasignar las comunas."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         except Ciudad.DoesNotExist:
             return Response(
             {"error": "Ciudad no encontrada"}, 
@@ -546,8 +560,14 @@ class OrganismoResponsableDetailView(APIView):
         """Eliminar un organismo responsable"""
         try:
             org_responsable = OrganismoResponsable.objects.get(pk=pk)
-            org_responsable.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            try:
+                org_responsable.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            except ValidationError as e:
+                return Response(
+                    {"error": "No se puede eliminar este organismo porque tiene medidas asociadas. Primero debe eliminar o reasignar las medidas."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         except OrganismoResponsable.DoesNotExist:
             return Response(
             {"error": "Organismo responsable no encontrado"}, 
