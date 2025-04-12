@@ -3,7 +3,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from .models import PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable, Medida, MedioVerificacion, Reporte
@@ -12,8 +12,19 @@ from .serializers import PlanPPDASerializer, ComunaSerializer, RegionSerializer,
 from .models import Reporte
 from .serializers import ReporteSerializer
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from app_reporte.permisos import EsRepOrgResOSoloLectura, EsSuperAdminOSoloLectura, EsAdminOSoloLectura
+from app_reporte.permisos import EsRepOrgResOSoloLectura, EsSuperAdminOSoloLectura, EsAdminOSoloLectura, EsSuperAdmin
+import unicodedata
+from datetime import datetime
 
+def normalizar_texto(texto):
+    """
+    Normaliza el texto eliminando acentos y convirtiendo a minúsculas.
+    """
+    if not texto:
+        return ""
+    texto_normalizado = ''.join(c for c in unicodedata.normalize('NFD', texto)
+                              if unicodedata.category(c) != 'Mn')
+    return texto_normalizado.lower()
 
 @extend_schema_view(
     get=extend_schema(summary="Listar todas las comunas", tags=["Comunas"]),
@@ -25,11 +36,34 @@ class ComunaView(APIView):
     def get(self, request):
         """
         Listar todas las comunas.
+        
+        Parámetros de búsqueda:
+        - nombre: Filtrar comunas por nombre (búsqueda parcial, case-insensitive, ignora tildes)
+        - ciudad_id: Filtrar comunas por ID de ciudad
+        - ciudad_nombre: Filtrar comunas por nombre de ciudad (búsqueda parcial, case-insensitive, ignora tildes)
 
         Retorna:
         - Lista de comunas en formato JSON.
         """
         comunas = Comuna.objects.all()
+        
+        nombre = request.GET.get('nombre')
+        if nombre:
+            nombre_normalizado = normalizar_texto(nombre)
+            comunas = [comuna for comuna in comunas 
+                      if nombre_normalizado in normalizar_texto(comuna.nombre)]
+        
+        ciudad_id = request.GET.get('ciudad_id')
+        ciudad_nombre = request.GET.get('ciudad_nombre')
+        
+        if ciudad_id:
+            comunas = [comuna for comuna in comunas 
+                      if str(comuna.ciudad.id) == ciudad_id]
+        elif ciudad_nombre:
+            ciudad_nombre_normalizado = normalizar_texto(ciudad_nombre)
+            comunas = [comuna for comuna in comunas 
+                      if ciudad_nombre_normalizado in normalizar_texto(comuna.ciudad.nombre)]
+            
         serializer = ComunaSerializer(comunas, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -44,7 +78,23 @@ class ComunaView(APIView):
         - Datos de la comuna creada en formato JSON.
         - Código de estado HTTP 201 si la creación es exitosa.
         - Errores de validación y código de estado HTTP 400 si la creación falla.
+        - Código de estado HTTP 409 si ya existe una comuna con el mismo nombre en la misma ciudad.
         """
+
+        nombre_comuna = request.data.get('nombre')
+        ciudad_id = request.data.get('ciudad')
+        
+        if nombre_comuna and ciudad_id:
+            nombre_normalizado = normalizar_texto(nombre_comuna)
+            
+            comunas_existentes = Comuna.objects.filter(ciudad_id=ciudad_id)
+            for comuna in comunas_existentes:
+                if normalizar_texto(comuna.nombre) == nombre_normalizado:
+                    return Response(
+                        {"error": f"Ya existe una comuna con el nombre '{nombre_comuna}' en la ciudad seleccionada"},
+                        status=status.HTTP_409_CONFLICT
+                    )
+        
         serializer = ComunaSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -60,7 +110,6 @@ class ComunaDetailView(APIView):
     
     permission_classes=[EsSuperAdminOSoloLectura]
     def put(self, request, pk):
-        
         """Actualizar comuna"""
         try:
             comuna = Comuna.objects.get(pk=pk)
@@ -70,7 +119,7 @@ class ComunaDetailView(APIView):
             status=status.HTTP_404_NOT_FOUND
         )
     
-        serializer = ComunaSerializer(comuna, data=request.data)
+        serializer = ComunaSerializer(comuna, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -102,15 +151,51 @@ class ComunaDetailView(APIView):
 )
 class PlanPPDAView(APIView):
     serializer_class = PlanPPDASerializer
-    permission_classes=[EsAdminOSoloLectura]
+    permission_classes=[EsSuperAdminOSoloLectura]
     def get(self, request):
         """
         Listar todos los planes PPDA.
+        
+        Parámetros de búsqueda:
+        - nombre: Filtrar planes por nombre (búsqueda parcial, case-insensitive, ignora tildes)
+        - mes_reporte: Filtrar planes por mes de reporte (1-12)
+        - anio: Filtrar planes por año
+        - comuna_id: Filtrar planes por ID de comuna
 
         Retorna:
         - Lista de planes PPDA en formato JSON.
         """
         planes = PlanPPDA.objects.all()
+        
+        nombre = request.GET.get('nombre')
+        if nombre:
+            nombre_normalizado = normalizar_texto(nombre)
+            planes = [plan for plan in planes 
+                     if nombre_normalizado in normalizar_texto(plan.nombre)]
+        
+        mes_reporte = request.GET.get('mes_reporte')
+        if mes_reporte:
+            try:
+                mes_reporte = int(mes_reporte)
+                planes = [plan for plan in planes 
+                         if plan.mes_reporte == mes_reporte]
+            except ValueError:
+                pass
+        
+        anio = request.GET.get('anio')
+        if anio:
+            try:
+                anio = int(anio)
+                planes = [plan for plan in planes 
+                         if plan.anio == anio]
+            except ValueError:
+                pass
+        
+        comuna_id = request.GET.get('comuna_id')
+        if comuna_id:
+            planes = [plan for plan in planes 
+                     if any(str(comuna.id) == comuna_id for comuna in plan.comunas.all())]
+            
         serializer = PlanPPDASerializer(planes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -125,7 +210,28 @@ class PlanPPDAView(APIView):
         - Datos del plan PPDA creado en formato JSON.
         - Código de estado HTTP 201 si la creación es exitosa.
         - Errores de validación y código de estado HTTP 400 si la creación falla.
+        - Código de estado HTTP 409 si ya existe un plan con los mismos valores en los campos nombre, anio, mes_reporte y comunas.
         """
+        nombre_plan = request.data.get('nombre')
+        anio_plan = request.data.get('anio')
+        mes_reporte_plan = request.data.get('mes_reporte')
+        comunas_ids = request.data.get('comunas', [])
+        
+        if nombre_plan and anio_plan and mes_reporte_plan and comunas_ids:
+            planes_existentes = PlanPPDA.objects.filter(
+                nombre=nombre_plan,
+                anio=anio_plan,
+                mes_reporte=mes_reporte_plan
+            )
+            
+            for plan in planes_existentes:
+                plan_comunas_ids = set(plan.comunas.values_list('id', flat=True))
+                if set(comunas_ids) == plan_comunas_ids:
+                    return Response(
+                        {"error": "Ya existe un plan con los mismos valores en los campos nombre, anio, mes_reporte y comunas"},
+                        status=status.HTTP_409_CONFLICT
+                    )
+        
         serializer = PlanPPDASerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -138,7 +244,7 @@ class PlanPPDAView(APIView):
     delete=extend_schema(summary="Eliminar un plan PPDA a través de su id",tags=["Planes PPDA"] )
 )
 class PlanPPDADetailView(APIView):    
-    permission_classes=[EsAdminOSoloLectura]
+    permission_classes=[EsSuperAdminOSoloLectura]
     def put(self, request, pk):
         """Actualizar un plan PPDA"""
         try:
@@ -193,7 +299,7 @@ class RegionDetailView(APIView):
             status=status.HTTP_404_NOT_FOUND
         )
     
-        serializer = RegionSerializer(region, data=request.data)
+        serializer = RegionSerializer(region, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -221,15 +327,30 @@ class RegionDetailView(APIView):
         )
     
 @extend_schema_view(
-    get=extend_schema(summary="Obtener todas las regiones", tags=["Regiones"]),
+    get=extend_schema(summary="Listar todas las regiones", tags=["Regiones"]),
     post=extend_schema(summary="Crear una nueva región", tags=["Regiones"], request=RegionSerializer)
 )
 class RegionView(APIView):
     serializer_class = RegionSerializer
     permission_classes=[EsSuperAdminOSoloLectura]
     def get(self, request):
-        """Listar todas las regiones"""
+        """
+        Listar todas las regiones.
+        
+        Parámetros de búsqueda:
+        - nombre: Filtrar regiones por nombre (búsqueda parcial, case-insensitive, ignora tildes)
+
+        Retorna:
+        - Lista de regiones en formato JSON.
+        """
         regiones = Region.objects.all()
+
+        nombre = request.GET.get('nombre')
+        if nombre:
+            nombre_normalizado = normalizar_texto(nombre)
+            regiones = [region for region in regiones 
+                       if nombre_normalizado in normalizar_texto(region.nombre)]
+            
         serializer = RegionSerializer(regiones, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -244,7 +365,21 @@ class RegionView(APIView):
         - Datos de la Región creada en formato JSON.
         - Código de estado HTTP 201 si la creación es exitosa.
         - Errores de validación y código de estado HTTP 400 si la creación falla.
+        - Código de estado HTTP 409 si ya existe una región con el mismo nombre.
         """
+        nombre_region = request.data.get('nombre')
+        
+        if nombre_region:
+            nombre_normalizado = normalizar_texto(nombre_region)
+            
+            regiones_existentes = Region.objects.all()
+            for region in regiones_existentes:
+                if normalizar_texto(region.nombre) == nombre_normalizado:
+                    return Response(
+                        {"error": f"Ya existe una región con el nombre '{nombre_region}'"},
+                        status=status.HTTP_409_CONFLICT
+                    )
+        
         serializer = RegionSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -262,11 +397,34 @@ class CiudadView(APIView):
     def get(self, request):
         """
         Listar todas las ciudades.
+        
+        Parámetros de búsqueda:
+        - nombre: Filtrar ciudades por nombre (búsqueda parcial, case-insensitive, ignora tildes)
+        - region_id: Filtrar ciudades por ID de región
+        - region_nombre: Filtrar ciudades por nombre de región (búsqueda parcial, case-insensitive, ignora tildes)
 
         Retorna:
         - Lista de ciudades en formato JSON.
         """
         ciudades = Ciudad.objects.all()
+        
+        nombre = request.GET.get('nombre')
+        if nombre:
+            nombre_normalizado = normalizar_texto(nombre)
+            ciudades = [ciudad for ciudad in ciudades 
+                       if nombre_normalizado in normalizar_texto(ciudad.nombre)]
+    
+        region_id = request.GET.get('region_id')
+        region_nombre = request.GET.get('region_nombre')
+        
+        if region_id:
+            ciudades = [ciudad for ciudad in ciudades 
+                       if str(ciudad.region.id) == region_id]
+        elif region_nombre:
+            region_nombre_normalizado = normalizar_texto(region_nombre)
+            ciudades = [ciudad for ciudad in ciudades 
+                       if region_nombre_normalizado in normalizar_texto(ciudad.region.nombre)]
+            
         serializer = CiudadSerializer(ciudades, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -282,7 +440,22 @@ class CiudadView(APIView):
         - Datos de la ciudad creada en formato JSON.
         - Codigo de estado HTTP 201 si la creacion es exitosa.
         - Errores de validación y código de estado HTTP 400 si la creación falla.
+        - Código de estado HTTP 409 si ya existe una ciudad con el mismo nombre en la misma región.
         """
+        nombre_ciudad = request.data.get('nombre')
+        region_id = request.data.get('region')
+        
+        if nombre_ciudad and region_id:
+            nombre_normalizado = normalizar_texto(nombre_ciudad)
+            
+            ciudades_existentes = Ciudad.objects.filter(region_id=region_id)
+            for ciudad in ciudades_existentes:
+                if normalizar_texto(ciudad.nombre) == nombre_normalizado:
+                    return Response(
+                        {"error": f"Ya existe una ciudad con el nombre '{nombre_ciudad}' en la región seleccionada"},
+                        status=status.HTTP_409_CONFLICT
+                    )
+        
         serializer = CiudadSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -306,7 +479,7 @@ class CiudadDetailView(APIView):
             status=status.HTTP_404_NOT_FOUND
         )
     
-        serializer = CiudadSerializer(ciudad, data=request.data)
+        serializer = CiudadSerializer(ciudad, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -343,7 +516,7 @@ class CiudadDetailView(APIView):
                          tags=["Organismos Responsables"])
 )
 class OrganismoResponsableDetailView(APIView):
-    permission_classes=[EsAdminOSoloLectura]
+    permission_classes=[EsSuperAdminOSoloLectura]
     def put(self, request, pk):
         """Actualizar organismo responsable"""
         try:
@@ -354,7 +527,7 @@ class OrganismoResponsableDetailView(APIView):
             status=status.HTTP_404_NOT_FOUND
         )
     
-        serializer = OrganismoResponsableSerializer(org_responsable, data=request.data)
+        serializer = OrganismoResponsableSerializer(org_responsable, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -394,20 +567,29 @@ class OrganismoResponsableView(APIView):
     Endpoints:
     - GET /organismos-responsables/: Listar Organismos Responsables.
     """
-    permission_classes = [EsRepOrgResOSoloLectura]
+    permission_classes = [EsSuperAdminOSoloLectura]
     def get(self, request):
         """
         Listar Organismos Responsables.
+        
+        Parámetros de búsqueda:
+        - nombre: Filtrar organismos por nombre (búsqueda parcial, case-insensitive, ignora tildes)
 
         Retorna:
         - Lista de Organismos Responsables en formato JSON.
         """
-        planes = OrganismoResponsable.objects.all()
-        serializer = OrganismoResponsableSerializer(planes, many=True)
+        organismos = OrganismoResponsable.objects.all()
+        
+        nombre = request.GET.get('nombre')
+        if nombre:
+            nombre_normalizado = normalizar_texto(nombre)
+            organismos = [org for org in organismos 
+                         if nombre_normalizado in normalizar_texto(org.nombre)]
+            
+        serializer = OrganismoResponsableSerializer(organismos, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request):
-
         """
         Crear un nuevo Organismo Responsable.
 
@@ -418,7 +600,21 @@ class OrganismoResponsableView(APIView):
         - Datos del Organismo Responsable creado en formato JSON.
         - Codigo de estado HTTP 201 si la creación es exitosa.
         - Errores de validación y codigo de estado HTTP 400 si la creacion falla.
+        - Código de estado HTTP 409 si ya existe un organismo responsable con el mismo nombre.
         """
+        nombre_organismo = request.data.get('nombre')
+        
+        if nombre_organismo:
+            nombre_normalizado = normalizar_texto(nombre_organismo)
+            
+            organismos_existentes = OrganismoResponsable.objects.all()
+            for organismo in organismos_existentes:
+                if normalizar_texto(organismo.nombre) == nombre_normalizado:
+                    return Response(
+                        {"error": f"Ya existe un organismo responsable con el nombre '{nombre_organismo}'"},
+                        status=status.HTTP_409_CONFLICT
+                    )
+        
         serializer = OrganismoResponsableSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -436,7 +632,7 @@ class OrganismoResponsableView(APIView):
 )
 class ReporteListView(APIView):
     serializer_class = ReporteSerializer
-    permission_classes = [EsRepOrgResOSoloLectura]
+    permission_classes = [permissions.AllowAny]
     def get(self, request):
         queryset = Reporte.objects.all()
 
@@ -505,10 +701,9 @@ class ReportesView(APIView):
     Endpoint para listar todos los reportes.
     GET /api/reportes/
     """
+    permission_classes = [permissions.AllowAny]
     def get(self, request):
         reportes = Reporte.objects.all()
-        if not reportes:
-            return Http404()
         serializer = ReporteSerializer(reportes, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -539,7 +734,6 @@ class ReporteView(APIView):
     - PUT /api/reporte/<id>        -> Actualizar reporte.
     - DELETE /api/reporte/<id>     -> Eliminar reporte.
     """
-    #permitir el manejo de archivos en la petición
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [EsRepOrgResOSoloLectura]
 
@@ -580,15 +774,44 @@ class ReporteView(APIView):
 )
 class MedidaView(APIView):
     serializer_class = MedidaSerializer
-    permission_classes = [EsRepOrgResOSoloLectura]
+    permission_classes = [EsSuperAdminOSoloLectura]
     def get(self, request):
         """
         Listar todas las medidas.
+        
+        Parámetros de búsqueda:
+        - nombre_corto: Filtrar medidas por nombre corto (búsqueda parcial, case-insensitive, ignora tildes)
+        - referencia_pda: Filtrar medidas por referencia PDA (búsqueda parcial, case-insensitive, ignora tildes)
+        - plan_id: Filtrar medidas por ID de plan PPDA
+        - organismo_id: Filtrar medidas por ID de organismo responsable
 
         Retorna:
         - Lista de medidas en formato JSON.
         """
         medidas = Medida.objects.all()
+        
+        nombre_corto = request.GET.get('nombre_corto')
+        if nombre_corto:
+            nombre_normalizado = normalizar_texto(nombre_corto)
+            medidas = [medida for medida in medidas 
+                      if nombre_normalizado in normalizar_texto(medida.nombre_corto)]
+        
+        referencia_pda = request.GET.get('referencia_pda')
+        if referencia_pda:
+            referencia_normalizada = normalizar_texto(referencia_pda)
+            medidas = [medida for medida in medidas 
+                      if referencia_normalizada in normalizar_texto(medida.referencia_pda)]
+        
+        plan_id = request.GET.get('plan_id')
+        if plan_id:
+            medidas = [medida for medida in medidas 
+                      if str(medida.plan.id) == plan_id]
+        
+        organismo_id = request.GET.get('organismo_id')
+        if organismo_id:
+            medidas = [medida for medida in medidas 
+                      if any(str(org.id) == organismo_id for org in medida.organismos.all())]
+            
         serializer = MedidaSerializer(medidas, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -603,7 +826,34 @@ class MedidaView(APIView):
         - Datos de la medidas creada en formato JSON.
         - Código de estado HTTP 201 si la creación es exitosa.
         - Errores de validación y código de estado HTTP 400 si la creación falla.
+        - Código de estado HTTP 409 si ya existe una medida con los mismos valores en los campos referencia_pda, frecuencia_reporte, tipo_medida, plazo, plan y organismos.
         """
+        referencia_pda = request.data.get('referencia_pda')
+        frecuencia_reporte = request.data.get('frecuencia_reporte')
+        tipo_medida = request.data.get('tipo_medida')
+        plazo = request.data.get('plazo')
+        plan_id = request.data.get('plan')
+        organismos_ids = request.data.get('organismos', [])
+        
+        if referencia_pda and frecuencia_reporte and tipo_medida and plan_id and organismos_ids:
+            medidas_existentes = Medida.objects.filter(
+                referencia_pda=referencia_pda,
+                frecuencia_reporte=frecuencia_reporte,
+                tipo_medida=tipo_medida,
+                plan_id=plan_id
+            )
+            
+            if plazo:
+                medidas_existentes = medidas_existentes.filter(plazo=plazo)
+            
+            for medida in medidas_existentes:
+                medida_organismos_ids = set(medida.organismos.values_list('id', flat=True))
+                if set(organismos_ids) == medida_organismos_ids:
+                    return Response(
+                        {"error": "Ya existe una medida con los mismos valores en los campos referencia_pda, frecuencia_reporte, tipo_medida, plazo, plan y organismos"},
+                        status=status.HTTP_409_CONFLICT
+                    )
+        
         serializer = MedidaSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -616,7 +866,7 @@ class MedidaView(APIView):
     delete=extend_schema(summary="Eliminar una medidas por su id",tags=["Medidas"] )
 )
 class MedidaDetailView(APIView):
-    permission_classes = [EsAdminOSoloLectura]
+    permission_classes = [EsSuperAdminOSoloLectura]
     def put(self, request, pk):
         """Actualizar medidas"""
         try:
@@ -627,7 +877,7 @@ class MedidaDetailView(APIView):
             status=status.HTTP_404_NOT_FOUND
         )
     
-        serializer = MedidaSerializer(medida, data=request.data)
+        serializer = MedidaSerializer(medida, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

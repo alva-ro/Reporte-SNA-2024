@@ -79,17 +79,6 @@ class OrganismoResponsable(models.Model):
 class Medida(models.Model):
     """
     Representa una medida contenida en el plan PPDA.
-
-    Atributos:
-        referencia_pda (str): Código o referencia del plan en el que se enmarca la medida.
-        nombre_corto (str): Nombre breve que identifica la medida.
-        descripcion (str): Descripción detallada de la medida.
-        indicador (str): Indicador que permite evaluar el cumplimiento de la medida.
-        formula_calculo (str): Fórmula usada para calcular el indicador.
-        frecuencia_reporte (str): Frecuencia con la que se debe reportar la medida.
-        tipo_medida (str): Indica si es una medida regulatoria o no regulatoria.
-        plazo (date): Fecha límite para la ejecución de la medida.
-        organismos (ManyToMany): Organismos responsables de la medida.
     """
     FRECUENCIA_CHOICES = [
         ('anual', 'Anual'),
@@ -110,7 +99,7 @@ class Medida(models.Model):
     frecuencia_reporte = models.CharField(max_length=50, choices=FRECUENCIA_CHOICES)
     tipo_medida = models.CharField(max_length=50, choices=TIPO_MEDIDA_CHOICES)
     plazo = models.DateField(blank=True, null=True)
-
+    plan = models.ForeignKey('PlanPPDA', on_delete=models.CASCADE, related_name='medidas', null=False, blank=False)
     organismos = models.ManyToManyField('OrganismoResponsable', related_name='medidas')
 
     def __str__(self):

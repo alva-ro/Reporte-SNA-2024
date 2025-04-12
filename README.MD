@@ -63,3 +63,81 @@ Para más detalles, consulta la documentación en:
 ```
 http://127.0.0.1:8000/api/docs/#/
 ```
+
+## Búsqueda por Nombre
+
+El sistema permite buscar entidades por nombre utilizando parámetros de consulta (query params). La búsqueda es:
+- Parcial (contiene el texto buscado)
+- No distingue entre mayúsculas y minúsculas
+- Ignora tildes y acentos
+
+### Endpoints con búsqueda por nombre:
+
+1. **Comunas**
+   ```
+   GET /comunas/?nombre=valor
+   GET /comunas/?ciudad_id=valor
+   GET /comunas/?ciudad_nombre=valor
+   ```
+   Ejemplos:
+   - `/comunas/?nombre=santiago` encontrará "Santiago", "Sántiago", "SANTIAGO", etc.
+   - `/comunas/?ciudad_id=1` encontrará todas las comunas de la ciudad con ID 1
+   - `/comunas/?ciudad_nombre=santiago` encontrará todas las comunas de la ciudad Santiago
+   - `/comunas/?ciudad_nombre=santiago&nombre=centro` encontrará las comunas de la ciudad Santiago que contengan "centro" en su nombre
+
+2. **Ciudades**
+   ```
+   GET /ciudades/?nombre=valor
+   GET /ciudades/?region_id=valor
+   GET /ciudades/?region_nombre=valor
+   ```
+   Ejemplos:
+   - `/ciudades/?nombre=santiago` encontrará "Santiago", "Sántiago", "SANTIAGO", etc.
+   - `/ciudades/?region_id=1` encontrará todas las ciudades de la región con ID 1
+   - `/ciudades/?region_nombre=metropolitana` encontrará todas las ciudades de la región Metropolitana
+   - `/ciudades/?region_nombre=metropolitana&nombre=santiago` encontrará las ciudades de la región Metropolitana que contengan "santiago" en su nombre
+
+3. **Regiones**
+   ```
+   GET /regiones/?nombre=valor
+   ```
+   Ejemplo: `/regiones/?nombre=metropolitana` encontrará "Metropolitana", "METROPOLITANA", etc.
+
+4. **Planes PPDA**
+   ```
+   GET /planes/?nombre=valor
+   GET /planes/?mes_reporte=valor
+   GET /planes/?anio=valor
+   GET /planes/?comuna_id=valor
+   ```
+   Ejemplos:
+   - `/planes/?nombre=descontaminacion` encontrará "Descontaminación", "DESCONTAMINACION", etc.
+   - `/planes/?mes_reporte=6` encontrará todos los planes con mes de reporte 6 (junio)
+   - `/planes/?anio=2024` encontrará todos los planes del año 2024
+   - `/planes/?comuna_id=1` encontrará todos los planes que incluyan la comuna con ID 1
+   - `/planes/?anio=2024&mes_reporte=6` encontrará todos los planes del año 2024 con mes de reporte 6
+   - `/planes/?comuna_id=1&nombre=santiago` encontrará todos los planes que incluyan la comuna con ID 1 y contengan "santiago" en su nombre
+
+5. **Organismos Responsables**
+   ```
+   GET /organismo-responsable/?nombre=valor
+   ```
+   Ejemplo: `/organismo-responsable/?nombre=ministerio` encontrará "Ministerio", "MINISTERIO", etc.
+
+6. **Medidas**
+   ```
+   GET /medidas/?nombre_corto=valor
+   GET /medidas/?referencia_pda=valor
+   GET /medidas/?plan_id=valor
+   GET /medidas/?organismo_id=valor
+   ```
+   Ejemplos:
+   - `/medidas/?nombre_corto=reduccion` encontrará medidas con "reducción" en su nombre corto
+   - `/medidas/?referencia_pda=PPDA-2024` encontrará medidas con referencia PDA que contengan "PPDA-2024"
+   - `/medidas/?plan_id=1` encontrará todas las medidas del plan PPDA con ID 1
+   - `/medidas/?organismo_id=2` encontrará todas las medidas asignadas al organismo con ID 2
+   - `/medidas/?plan_id=1&organismo_id=2` encontrará las medidas del plan con ID 1 que estén asignadas al organismo con ID 2
+
+### Notas:
+- Si no se proporciona el parámetro `nombre`, se devuelven todos los registros
+- La búsqueda es parcial (encuentra coincidencias en cualquier parte del nombre)
