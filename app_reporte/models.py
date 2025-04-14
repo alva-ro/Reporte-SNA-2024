@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib import admin
+from django.utils.timezone import now
+
 
 class PlanPPDA(models.Model):
     """
@@ -203,3 +205,24 @@ class Reporte(models.Model):
     )
     def __str__(self):
         return f"Reporte de {self.organismo} sobre {self.medida} - {self.fecha_envio}"
+    
+class HistorialEstadoReporte(models.Model):
+    """
+    Registra los cambios de estado de los reportes para mantener trazabilidad.
+    Guarda el estado anterior, el nuevo, quién lo modificó y cuándo.
+    """
+    
+    reporte = models.ForeignKey(Reporte, on_delete=models.CASCADE)
+    estado_anterior = models.CharField(max_length=20)
+    estado_nuevo = models.CharField(max_length=20)
+    actualizado_por = models.CharField(max_length=100)
+    fecha = models.DateTimeField(auto_now_add=True) 
+
+
+    class Meta:
+        verbose_name = "Historial de Cambio de Estado"
+        verbose_name_plural = "Historiales de Cambios de Estado"
+
+    def __str__(self):
+        return f"{self.reporte.id}: {self.estado_anterior} → {self.estado_nuevo} ({self.fecha.date()})"
+

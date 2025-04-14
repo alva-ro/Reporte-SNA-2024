@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from .models import PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable, Medida, MedioVerificacion, Reporte
 from .serializers import PlanPPDASerializer, ComunaSerializer, RegionSerializer, \
     CiudadSerializer, OrganismoResponsableSerializer, MedidaSerializer, MedioVerificacionSerializer, EntidadSerializer, ReporteSerializer
@@ -13,6 +13,13 @@ from .models import Reporte
 from .serializers import ReporteSerializer
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from app_reporte.permisos import EsRepOrgResOSoloLectura, EsSuperAdminOSoloLectura, EsAdminOSoloLectura
+from datetime import datetime
+from .models import Reporte, HistorialEstadoReporte
+from django.utils.timezone import now
+from rest_framework.pagination import PageNumberPagination
+from rest_framework import generics
+from app_reporte.models import Reporte
+from app_reporte.serializers import ReporteSerializer
 
 
 @extend_schema_view(
@@ -424,76 +431,131 @@ class OrganismoResponsableView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 """
     Lista reportes
 """
-@extend_schema_view(
-    get=extend_schema(
-        summary="Listar reportes",
-        description="Permite listar reportes con filtros por organismo, estado y fecha de envío",
-        tags=["Reportes"]
-    )
+class ReportePagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+@extend_schema(
+    summary="Listar reportes con filtros",
+    description="Permite listar reportes filtrando por organismo, estado y fecha de envío, y ordenarlos por estado o fecha.",
+    tags=["Reportes"],  
+    parameters=[
+        OpenApiParameter(name='organismo', type=int, location=OpenApiParameter.QUERY, description='ID del organismo responsable'),
+        OpenApiParameter(name='estado', type=str, location=OpenApiParameter.QUERY, description='Estado del reporte (pendiente, aprobado, rechazado)'),
+        OpenApiParameter(name='fecha_envio', type=str, location=OpenApiParameter.QUERY, description='Fecha exacta de envío (YYYY-MM-DD)'),
+        OpenApiParameter(name='ordering', type=str, location=OpenApiParameter.QUERY, description='Campo de ordenamiento, por ejemplo "-fecha_envio"'),
+        OpenApiParameter(name='page', type=int, location=OpenApiParameter.QUERY, description='Número de página'),
+        OpenApiParameter(name='page_size', type=int, location=OpenApiParameter.QUERY, description='Cantidad de elementos por página'),
+    ]
 )
-class ReporteListView(APIView):
+class ReporteListView(generics.ListAPIView):
+    queryset = Reporte.objects.all()
     serializer_class = ReporteSerializer
     permission_classes = [EsRepOrgResOSoloLectura]
+
     def get(self, request):
         queryset = Reporte.objects.all()
 
         organismo_id = request.GET.get('organismo')
         estado = request.GET.get('estado')
         fecha_envio = request.GET.get('fecha_envio')
+        ordering = request.GET.get('ordering')  
 
+        # Filtros con validación
         if organismo_id:
+            if not organismo_id.isdigit():
+                return Response({"error": "El ID de organismo debe ser un número."}, status=status.HTTP_400_BAD_REQUEST)
             queryset = queryset.filter(organismo_id=organismo_id)
-        if estado:
-            queryset = queryset.filter(estado=estado)
-        if fecha_envio:
-            queryset = queryset.filter(fecha_envio=fecha_envio)
 
-        serializer = ReporteSerializer(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        ESTADOS_VALIDOS = ["pendiente", "aprobado", "rechazado"]
+        if estado:
+            if estado not in ESTADOS_VALIDOS:
+                return Response({"error": f"Estado inválido. Debe ser uno de: {', '.join(ESTADOS_VALIDOS)}"}, status=status.HTTP_400_BAD_REQUEST)
+            queryset = queryset.filter(estado=estado)
+
+        if fecha_envio:
+            try:
+                fecha_obj = datetime.strptime(fecha_envio, "%Y-%m-%d").date()
+                queryset = queryset.filter(fecha_envio=fecha_obj)
+            except ValueError:
+                return Response({"error": "Formato de fecha inválido. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Ordenamiento
+        if ordering in ['fecha_envio', '-fecha_envio', 'estado', '-estado']:
+            queryset = queryset.order_by(ordering)
+
+        paginator = ReportePagination()
+        page = paginator.paginate_queryset(queryset, request)
+        serializer = ReporteSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
 
 @extend_schema_view(
     put=extend_schema(
         summary="Modificar estado de un reporte",
-        description="Permite cambiar el estado de un reporte a aprobado, rechazado o pendiente",
+        description="Permite cambiar el estado de un reporte a aprobado, rechazado o pendiente. Se registra el cambio en historial.",
         tags=["Reportes"]
     )
 )
 class ReporteEstadoUpdateView(APIView):
-    
     """
-        Permite actualizar el estado de un reporte a "aprobado", "rechazado" o "pendiente".
+    Permite actualizar el estado de un reporte a "aprobado", "rechazado" o "pendiente".
+    También registra la modificación en un historial para trazabilidad.
     """
     serializer_class = ReporteSerializer
     permission_classes = [EsAdminOSoloLectura]
 
     def put(self, request, id_reporte):
-        
-        """
-            Permite actualizar el estado de un reporte a "aprobado", "rechazado" o "pendiente".
-        """
         try:
             reporte = Reporte.objects.get(id=id_reporte)
         except Reporte.DoesNotExist:
             return Response({"error": "Reporte no encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
         nuevo_estado = request.data.get("estado")
-        if nuevo_estado not in ["pendiente", "aprobado", "rechazado"]:
-            return Response({"error": "Estado inválido"}, status=status.HTTP_400_BAD_REQUEST)
+        ESTADOS_VALIDOS = ["pendiente", "aprobado", "rechazado"]
+
+        if nuevo_estado not in ESTADOS_VALIDOS:
+            return Response({"error": f"Estado inválido. Debe ser uno de: {', '.join(ESTADOS_VALIDOS)}"}, status=status.HTTP_400_BAD_REQUEST)
 
         if nuevo_estado == reporte.estado:
-            return Response(
-                {"detail": "El reporte ya tiene ese estado."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({
+                "detail": "El reporte ya tiene ese estado.",
+                "estado_actual": reporte.estado
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        if reporte.estado == "rechazado" and nuevo_estado == "aprobado":
+            return Response({"error": "No se puede aprobar un reporte que fue rechazado previamente."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if reporte.estado == "aprobado" and nuevo_estado != "aprobado":
+            return Response({"error": "No se puede modificar un reporte que ya fue aprobado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        estado_anterior = reporte.estado
         reporte.estado = nuevo_estado
         reporte.save()
 
+        # Registro de trazabilidad
+        HistorialEstadoReporte.objects.create(
+            reporte=reporte,
+            estado_anterior=estado_anterior,
+            estado_nuevo=nuevo_estado,
+            actualizado_por=request.user.username if request.user.is_authenticated else "Desconocido"
+        )
+
         serializer = ReporteSerializer(reporte)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({
+            "mensaje": "Estado actualizado correctamente",
+            "estado_anterior": estado_anterior,
+            "estado_nuevo": nuevo_estado,
+            "reporte": serializer.data
+        }, status=status.HTTP_200_OK)
+
+
 @extend_schema_view(
     get=extend_schema(
         summary="Listar todos los reportes",
