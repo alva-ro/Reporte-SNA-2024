@@ -410,16 +410,14 @@ Cada cambio queda registrado en un historial de trazabilidad (`HistorialEstadoRe
 
 ---
 
-## Información entrega 2
-En esta segunda entrega nuestro foco principal fue integrar seguridad a nuestros endpoints a través de token JWT, asignando roles y permisos para controlar los accesos. 
+## Información entrega 3
+En esta tercera entrega nuestro foco principal mejorar el manejo de roles para los distintos endpoints existentes, además de agregar validaciones que permitan mantener la integridad de los datos. Además, se integró el filtrado de endpoints para obtener de manera más optima la información. 
 
 ## Próximos pasos
 1. Documentar el proceso de autenticación y autorización para los administradores.
-2. Crear nuevos endpoints para mejorar las opciones de filtrados.
-3. Integrar rate limiting.
-4. Fortalecer validaciones en endpoints críticos.
-5. Agregar trazabilidad completa al historial de cambios.
-6. Incorporar tests automáticos.
+2. Integrar rate limiting.
+3. Agregar trazabilidad completa al historial de cambios.
+4. Incorporar tests automáticos.
 
 Para más detalles, consulta la documentación en:
 ```
