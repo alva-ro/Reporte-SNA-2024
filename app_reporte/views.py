@@ -34,7 +34,18 @@ def normalizar_texto(texto):
     return texto_normalizado.lower()
 
 @extend_schema_view(
-    get=extend_schema(summary="Listar todas las comunas", tags=["Comunas"]),
+    get=extend_schema(
+        summary="Listar todas las comunas", 
+        tags=["Comunas"],
+        parameters=[
+            OpenApiParameter(name='nombre', type=str, location=OpenApiParameter.QUERY, 
+                           description='Filtrar comunas por nombre (búsqueda parcial, case-insensitive, ignora tildes)'),
+            OpenApiParameter(name='ciudad_id', type=int, location=OpenApiParameter.QUERY, 
+                           description='Filtrar comunas por ID de ciudad'),
+            OpenApiParameter(name='ciudad_nombre', type=str, location=OpenApiParameter.QUERY, 
+                           description='Filtrar comunas por nombre de ciudad (búsqueda parcial, case-insensitive, ignora tildes)'),
+        ],
+    ),
     post=extend_schema(summary="Crear una nueva comuna", tags=["Comunas"], request=ComunaSerializer),
 )
 class ComunaView(APIView):
@@ -109,9 +120,30 @@ class ComunaView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 @extend_schema_view(
-    get=extend_schema(summary="Obtener una comuna a través de su id", tags=["Comunas"]),
-    put=extend_schema(summary="Modificar una comuna existente a través de su id", tags=["Comunas"]),
-    delete=extend_schema(summary="Eliminar una comuna a través de su id", tags=["Comunas"])
+    get=extend_schema(
+        summary="Obtener una comuna a través de su id", 
+        tags=["Comunas"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la comuna a obtener'),
+        ],
+    ),
+    put=extend_schema(
+        summary="Modificar una comuna existente a través de su id", 
+        tags=["Comunas"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la comuna a modificar'),
+        ],
+    ),
+    delete=extend_schema(
+        summary="Eliminar una comuna a través de su id", 
+        tags=["Comunas"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la comuna a eliminar'),
+        ],
+    )
 )
 class ComunaDetailView(APIView):
     serializer_class = ComunaSerializer
@@ -149,7 +181,20 @@ class ComunaDetailView(APIView):
             )
 
 @extend_schema_view(
-    get=extend_schema(summary="Listar todos los planes PPDA", tags=["Planes PPDA"]),
+    get=extend_schema(
+        summary="Listar todos los planes PPDA", 
+        tags=["Planes PPDA"],
+        parameters=[
+            OpenApiParameter(name='nombre', type=str, location=OpenApiParameter.QUERY, 
+                           description='Filtrar planes por nombre (búsqueda parcial, case-insensitive, ignora tildes)'),
+            OpenApiParameter(name='mes_reporte', type=int, location=OpenApiParameter.QUERY, 
+                           description='Filtrar planes por mes de reporte (1-12)'),
+            OpenApiParameter(name='anio', type=int, location=OpenApiParameter.QUERY, 
+                           description='Filtrar planes por año'),
+            OpenApiParameter(name='comuna_id', type=int, location=OpenApiParameter.QUERY, 
+                           description='Filtrar planes por ID de comuna'),
+        ],
+    ),
     post=extend_schema(summary="Crear un nuevo plan PPDA", tags=["Planes PPDA"], request=PlanPPDASerializer)
 )
 class PlanPPDAView(APIView):
@@ -242,9 +287,30 @@ class PlanPPDAView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema_view(
-    get=extend_schema(summary="Obtener un plan PPDA a través de su id", tags=["Planes PPDA"]),
-    put= extend_schema(summary="Modificar un plan PPDA existente a través de su id", tags=["Planes PPDA"]),
-    delete=extend_schema(summary="Eliminar un plan PPDA a través de su id",tags=["Planes PPDA"] )
+    get=extend_schema(
+        summary="Obtener un plan PPDA a través de su id", 
+        tags=["Planes PPDA"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID del plan PPDA a obtener'),
+        ],
+    ),
+    put=extend_schema(
+        summary="Modificar un plan PPDA existente a través de su id", 
+        tags=["Planes PPDA"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID del plan PPDA a modificar'),
+        ],
+    ),
+    delete=extend_schema(
+        summary="Eliminar un plan PPDA a través de su id",
+        tags=["Planes PPDA"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID del plan PPDA a eliminar'),
+        ],
+    )
 )
 class PlanPPDADetailView(APIView):    
     permission_classes=[EsSuperAdminOSoloLectura]
@@ -292,57 +358,14 @@ class PlanPPDADetailView(APIView):
         )
 
 @extend_schema_view(
-    get=extend_schema(summary="Obtener una región a través de su id", tags=["Regiones"]),
-    put= extend_schema(summary="Modificar una región existente a través de su id", tags=["Regiones"]),
-    delete=extend_schema(summary="Eliminar una región a través de su id",tags=["Regiones"] )
-)
-class RegionDetailView(APIView):    
-    permission_classes=[EsSuperAdminOSoloLectura]
-    def put(self, request, pk):
-        """Actualizar región"""
-        try:
-         region = Region.objects.get(pk=pk)
-        except Region.DoesNotExist:
-            return Response(
-            {"error": "Región no encontrada"}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-        serializer = RegionSerializer(region, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    def get(self, request, pk):
-        """Obtener una región por su id"""
-        try:
-            region = Region.objects.get(pk=pk)
-            serializer = RegionSerializer(region)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Region.DoesNotExist:
-            raise Http404("Región no encontrada")
-    
-    def delete(self,request, pk):
-        """Eliminar región"""
-        try:
-            region = Region.objects.get(pk=pk)
-            try:
-                region.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            except ValidationError as e:
-                return Response(
-                    {"error": "No se puede eliminar esta región porque tiene ciudades asociadas. Primero debe eliminar o reasignar las ciudades."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        except Region.DoesNotExist:
-            return Response(
-            {"error": "Región no encontrada"}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-@extend_schema_view(
-    get=extend_schema(summary="Listar todas las regiones", tags=["Regiones"]),
+    get=extend_schema(
+        summary="Listar todas las regiones", 
+        tags=["Regiones"],
+        parameters=[
+            OpenApiParameter(name='nombre', type=str, location=OpenApiParameter.QUERY, 
+                           description='Filtrar regiones por nombre (búsqueda parcial, case-insensitive, ignora tildes)'),
+        ],
+    ),
     post=extend_schema(summary="Crear una nueva región", tags=["Regiones"], request=RegionSerializer)
 )
 class RegionView(APIView):
@@ -401,9 +424,79 @@ class RegionView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@extend_schema_view(
+    get=extend_schema(
+        summary="Obtener una región por id", 
+        tags=["Regiones"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la región a obtener'),
+        ],
+    ),
+    put=extend_schema(
+        summary="Modificar una región existente por su id", 
+        tags=["Regiones"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la región a modificar'),
+        ],
+    ),
+    delete=extend_schema(
+        summary="Eliminar una región por su id",
+        tags=["Regiones"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la región a eliminar'),
+        ],
+    )
+)
+class RegionDetailView(APIView):
+    serializer_class = RegionSerializer
+    permission_classes = [EsSuperAdminOSoloLectura]
+
+    def get(self, request, pk):
+        if not pk:
+            raise BadRequest("Se requiere un ID de región para esta operación.")
+        region = get_object_or_404(Region, id=pk)
+        serializer = RegionSerializer(region)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        if not pk:
+            raise BadRequest("Se requiere un ID de región para esta operación.")
+        region = get_object_or_404(Region, id=pk)
+        serializer = RegionSerializer(region, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        if not pk:
+            raise BadRequest("Se requiere un ID de región para esta operación.")
+        region = get_object_or_404(Region, id=pk)
+        try:
+            region.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ValidationError as e:
+            return Response(
+                {"error": "No se puede eliminar esta región porque tiene ciudades asociadas. Primero debe eliminar o reasignar las ciudades."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 @extend_schema_view(
-    get=extend_schema(summary="Listar todas las ciudades", tags=["Ciudades"]),
+    get=extend_schema(
+        summary="Listar todas las ciudades", 
+        tags=["Ciudades"],
+        parameters=[
+            OpenApiParameter(name='nombre', type=str, location=OpenApiParameter.QUERY, 
+                           description='Filtrar ciudades por nombre (búsqueda parcial, case-insensitive, ignora tildes)'),
+            OpenApiParameter(name='region_id', type=int, location=OpenApiParameter.QUERY, 
+                           description='Filtrar ciudades por ID de región'),
+            OpenApiParameter(name='region_nombre', type=str, location=OpenApiParameter.QUERY, 
+                           description='Filtrar ciudades por nombre de región (búsqueda parcial, case-insensitive, ignora tildes)'),
+        ],
+    ),
     post=extend_schema(summary="Crear una nueva ciudad", tags=["Ciudades"], request=CiudadSerializer)
 )
 class CiudadView(APIView):
@@ -478,9 +571,30 @@ class CiudadView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 @extend_schema_view(
-    get=extend_schema(summary="Obtener una ciudad a través de su id", tags=["Ciudades"]),
-    put= extend_schema(summary="Modificar una ciudad existente a través de su id", tags=["Ciudades"]),
-    delete=extend_schema(summary="Eliminar una ciudad a través de su id",tags=["Ciudades"] )
+    get=extend_schema(
+        summary="Obtener una ciudad a través de su id", 
+        tags=["Ciudades"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la ciudad a obtener'),
+        ],
+    ),
+    put=extend_schema(
+        summary="Modificar una ciudad existente a través de su id", 
+        tags=["Ciudades"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la ciudad a modificar'),
+        ],
+    ),
+    delete=extend_schema(
+        summary="Eliminar una ciudad a través de su id",
+        tags=["Ciudades"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la ciudad a eliminar'),
+        ],
+    )
 )
 class CiudadDetailView(APIView):  
     permission_classes=[EsSuperAdminOSoloLectura]  
@@ -582,10 +696,19 @@ class OrganismoResponsableDetailView(APIView):
         )
 
 @extend_schema_view(
-    get=extend_schema(summary="Listar todos los Organismos Responsables",
-        tags=["Organismos Responsables"]),
-    post=extend_schema(summary="Crear un nuevo Organismo Responsable",
-        tags=["Organismos Responsables"], request=OrganismoResponsableSerializer)
+    get=extend_schema(
+        summary="Listar todos los Organismos Responsables",
+        tags=["Organismos Responsables"],
+        parameters=[
+            OpenApiParameter(name='nombre', type=str, location=OpenApiParameter.QUERY, 
+                           description='Filtrar organismos por nombre (búsqueda parcial, case-insensitive, ignora tildes)'),
+        ],
+    ),
+    post=extend_schema(
+        summary="Crear un nuevo Organismo Responsable",
+        tags=["Organismos Responsables"], 
+        request=OrganismoResponsableSerializer
+    )
 )
 class OrganismoResponsableView(APIView):
     """
@@ -797,15 +920,27 @@ class ReportesView(APIView):
     ),
     get=extend_schema(
         summary="Obtener detalle de un reporte",
-        tags=["Reportes"]
+        tags=["Reportes"],
+        parameters=[
+            OpenApiParameter(name='id_reporte', type=int, location=OpenApiParameter.PATH, 
+                           description='ID del reporte a obtener'),
+        ],
     ),
     put=extend_schema(
         summary="Actualizar un reporte existente",
-        tags=["Reportes"]
+        tags=["Reportes"],
+        parameters=[
+            OpenApiParameter(name='id_reporte', type=int, location=OpenApiParameter.PATH, 
+                           description='ID del reporte a actualizar'),
+        ],
     ),
     delete=extend_schema(
         summary="Eliminar un reporte existente",
-        tags=["Reportes"]
+        tags=["Reportes"],
+        parameters=[
+            OpenApiParameter(name='id_reporte', type=int, location=OpenApiParameter.PATH, 
+                           description='ID del reporte a eliminar'),
+        ],
     )
 )
 class ReporteView(APIView):
@@ -851,7 +986,20 @@ class ReporteView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 @extend_schema_view(
-    get=extend_schema(summary="Listar todas las medidas", tags=["Medidas"]),
+    get=extend_schema(
+        summary="Listar todas las medidas", 
+        tags=["Medidas"],
+        parameters=[
+            OpenApiParameter(name='nombre_corto', type=str, location=OpenApiParameter.QUERY, 
+                           description='Filtrar medidas por nombre corto (búsqueda parcial, case-insensitive, ignora tildes)'),
+            OpenApiParameter(name='referencia_pda', type=str, location=OpenApiParameter.QUERY, 
+                           description='Filtrar medidas por referencia PDA (búsqueda parcial, case-insensitive, ignora tildes)'),
+            OpenApiParameter(name='plan_id', type=int, location=OpenApiParameter.QUERY, 
+                           description='Filtrar medidas por ID de plan PPDA'),
+            OpenApiParameter(name='organismo_id', type=int, location=OpenApiParameter.QUERY, 
+                           description='Filtrar medidas por ID de organismo responsable'),
+        ],
+    ),
     post=extend_schema(summary="Crear una nueva medidas", tags=["Medidas"], request=MedidaSerializer),
 )
 class MedidaView(APIView):
@@ -943,9 +1091,30 @@ class MedidaView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 @extend_schema_view(
-    get=extend_schema(summary="Obtener una medidas por id", tags=["Medidas"]),
-    put= extend_schema(summary="Modificar una medidas existente por su id", tags=["Medidas"]),
-    delete=extend_schema(summary="Eliminar una medidas por su id",tags=["Medidas"] )
+    get=extend_schema(
+        summary="Obtener una medidas por id", 
+        tags=["Medidas"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la medida a obtener'),
+        ],
+    ),
+    put=extend_schema(
+        summary="Modificar una medidas existente por su id", 
+        tags=["Medidas"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la medida a modificar'),
+        ],
+    ),
+    delete=extend_schema(
+        summary="Eliminar una medidas por su id",
+        tags=["Medidas"],
+        parameters=[
+            OpenApiParameter(name='pk', type=int, location=OpenApiParameter.PATH, 
+                           description='ID de la medida a eliminar'),
+        ],
+    )
 )
 class MedidaDetailView(APIView):
     permission_classes = [EsSuperAdminOSoloLectura]

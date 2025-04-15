@@ -14,7 +14,7 @@ def asignar_plan_por_defecto(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app_reporte', '0006_reporte_estado'),
+        ('app_reporte', '0008_remove_historialestadoreporte_fecha_cambio_and_more'),
     ]
 
     operations = [

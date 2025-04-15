@@ -125,17 +125,219 @@ Para probar la paginación y filtros de reportes, puedes ejecutar el siguiente s
 
 > También puedes modificarlo para ajustar la cantidad de datos generados o simular combinaciones específicas de filtros y estados.
 
+## API Endpoints
 
-## API Endpoints Principales
-- **comunas**: `/api/comunas/`
-- **ciudades**: `/api/ciudades/`
-- **organismos responsales**: `/api/organismo-responsable/`
-- **planes ppda**: `/api/planes/`
-- **regiones**: `/api/regiones/`
+### 🔹 Regiones
 
----
+#### Listado de Regiones
+`GET /api/regiones/`
 
-## Endpoints desarrollados: Reportes
+Lista todas las regiones disponibles con filtrado opcional por nombre.
+
+##### Parámetros de consulta disponibles:
+| Parámetro | Tipo   | Descripción                                    | Ejemplo                  |
+|-----------|--------|------------------------------------------------|--------------------------|
+| `nombre`  | str    | Filtrar por nombre (búsqueda parcial)          | `nombre=metropolitana`   |
+
+##### Ejemplo de respuesta:
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Región Metropolitana"
+  }
+]
+```
+
+#### Operaciones CRUD de Regiones
+
+| Método | Ruta                    | Descripción                      |
+|--------|-------------------------|----------------------------------|
+| POST   | `/api/regiones/`        | Crear una nueva región           |
+| GET    | `/api/regiones/{id}/`   | Obtener detalle de una región    |
+| PUT    | `/api/regiones/{id}/`   | Actualizar una región existente  |
+| DELETE | `/api/regiones/{id}/`   | Eliminar una región existente    |
+
+### 🔹 Ciudades
+
+#### Listado de Ciudades
+`GET /api/ciudades/`
+
+Lista todas las ciudades con filtrado por nombre, región ID o nombre de región.
+
+##### Parámetros de consulta disponibles:
+| Parámetro      | Tipo   | Descripción                                    | Ejemplo                       |
+|----------------|--------|------------------------------------------------|-------------------------------|
+| `nombre`       | str    | Filtrar por nombre (búsqueda parcial)          | `nombre=santiago`             |
+| `region_id`    | int    | Filtrar por ID de región                       | `region_id=1`                 |
+| `region_nombre`| str    | Filtrar por nombre de región                   | `region_nombre=metropolitana` |
+
+##### Ejemplo de respuesta:
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Santiago",
+    "region": 1
+  }
+]
+```
+
+#### Operaciones CRUD de Ciudades
+
+| Método | Ruta                    | Descripción                      |
+|--------|-------------------------|----------------------------------|
+| POST   | `/api/ciudades/`        | Crear una nueva ciudad           |
+| GET    | `/api/ciudades/{id}/`   | Obtener detalle de una ciudad    |
+| PUT    | `/api/ciudades/{id}/`   | Actualizar una ciudad existente  |
+| DELETE | `/api/ciudades/{id}/`   | Eliminar una ciudad existente    |
+
+### 🔹 Comunas
+
+#### Listado de Comunas
+`GET /api/comunas/`
+
+Lista todas las comunas con filtrado por nombre, ciudad ID o nombre de ciudad.
+
+##### Parámetros de consulta disponibles:
+| Parámetro      | Tipo   | Descripción                                    | Ejemplo                  |
+|----------------|--------|------------------------------------------------|--------------------------|
+| `nombre`       | str    | Filtrar por nombre (búsqueda parcial)          | `nombre=santiago`        |
+| `ciudad_id`    | int    | Filtrar por ID de ciudad                       | `ciudad_id=1`            |
+| `ciudad_nombre`| str    | Filtrar por nombre de ciudad                   | `ciudad_nombre=santiago` |
+
+##### Ejemplo de respuesta:
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Santiago Centro",
+    "ciudad": 1
+  }
+]
+```
+
+#### Operaciones CRUD de Comunas
+
+| Método | Ruta                    | Descripción                      |
+|--------|-------------------------|----------------------------------|
+| POST   | `/api/comunas/`         | Crear una nueva comuna           |
+| GET    | `/api/comunas/{id}/`    | Obtener detalle de una comuna    |
+| PUT    | `/api/comunas/{id}/`    | Actualizar una comuna existente  |
+| DELETE | `/api/comunas/{id}/`    | Eliminar una comuna existente    |
+
+### 🔹 Planes PPDA
+
+#### Listado de Planes PPDA
+`GET /api/planes/`
+
+Lista todos los planes PPDA con filtrado por nombre, mes, año y comuna.
+
+##### Parámetros de consulta disponibles:
+| Parámetro      | Tipo   | Descripción                                    | Ejemplo                  |
+|----------------|--------|------------------------------------------------|--------------------------|
+| `nombre`       | str    | Filtrar por nombre (búsqueda parcial)          | `nombre=descontaminacion`|
+| `mes_reporte`  | int    | Filtrar por mes de reporte (1-12)              | `mes_reporte=6`          |
+| `anio`         | int    | Filtrar por año                                | `anio=2024`              |
+| `comuna_id`    | int    | Filtrar por ID de comuna                       | `comuna_id=1`            |
+
+##### Ejemplo de respuesta:
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Plan de Descontaminación",
+    "anio": 2024,
+    "mes_reporte": 6,
+    "comunas": [1, 2, 3]
+  }
+]
+```
+
+#### Operaciones CRUD de Planes PPDA
+
+| Método | Ruta                    | Descripción                      |
+|--------|-------------------------|----------------------------------|
+| POST   | `/api/planes/`          | Crear un nuevo plan PPDA         |
+| GET    | `/api/planes/{id}/`     | Obtener detalle de un plan PPDA  |
+| PUT    | `/api/planes/{id}/`     | Actualizar un plan PPDA existente|
+| DELETE | `/api/planes/{id}/`     | Eliminar un plan PPDA existente  |
+
+### 🔹 Organismos Responsables
+
+#### Listado de Organismos Responsables
+`GET /api/organismo-responsable/`
+
+Lista todos los organismos responsables con filtrado por nombre.
+
+##### Parámetros de consulta disponibles:
+| Parámetro | Tipo   | Descripción                                    | Ejemplo                  |
+|-----------|--------|------------------------------------------------|--------------------------|
+| `nombre`  | str    | Filtrar por nombre (búsqueda parcial)          | `nombre=ministerio`      |
+
+##### Ejemplo de respuesta:
+```json
+[
+  {
+    "id": 1,
+    "nombre": "Ministerio del Medio Ambiente"
+  }
+]
+```
+
+#### Operaciones CRUD de Organismos Responsables
+
+| Método | Ruta                               | Descripción                      |
+|--------|------------------------------------|----------------------------------|
+| POST   | `/api/organismo-responsable/`      | Crear un nuevo organismo         |
+| GET    | `/api/organismo-responsable/{id}/` | Obtener detalle de un organismo  |
+| PUT    | `/api/organismo-responsable/{id}/` | Actualizar un organismo existente|
+| DELETE | `/api/organismo-responsable/{id}/` | Eliminar un organismo existente  |
+
+### 🔹 Medidas
+
+#### Listado de Medidas
+`GET /api/medidas/`
+
+Lista todas las medidas con filtrado por nombre corto, referencia PDA, plan y organismo.
+
+##### Parámetros de consulta disponibles:
+| Parámetro       | Tipo   | Descripción                                    | Ejemplo                   |
+|-----------------|--------|------------------------------------------------|---------------------------|
+| `nombre_corto`  | str    | Filtrar por nombre corto                       | `nombre_corto=reduccion`  |
+| `referencia_pda`| str    | Filtrar por referencia PDA                     | `referencia_pda=PPDA-2024`|
+| `plan_id`       | int    | Filtrar por ID de plan                         | `plan_id=1`               |
+| `organismo_id`  | int    | Filtrar por ID de organismo                    | `organismo_id=2`          |
+
+##### Ejemplo de respuesta:
+```json
+[
+  {
+    "id": 1,
+    "nombre_corto": "Reducción de emisiones",
+    "referencia_pda": "PPDA-2024-001",
+    "plan": 1,
+    "organismos": [1, 2]
+  }
+]
+```
+
+#### Operaciones CRUD de Medidas
+
+| Método | Ruta                    | Descripción                      |
+|--------|-------------------------|----------------------------------|
+| POST   | `/api/medidas/`         | Crear una nueva medida           |
+| GET    | `/api/medidas/{id}/`    | Obtener detalle de una medida    |
+| PUT    | `/api/medidas/{id}/`    | Actualizar una medida existente  |
+| DELETE | `/api/medidas/{id}/`    | Eliminar una medida existente    |
+
+### Notas Generales
+- Las búsquedas por nombre son:
+  - Parciales (contienen el texto buscado)
+  - No distinguen entre mayúsculas y minúsculas
+  - Ignoran tildes y acentos
+
+## Reportes
 
 Los siguientes endpoints permiten gestionar reportes asociados a medidas de los planes PPDA, incluyendo su creación, actualización, validación y trazabilidad de estados.
 
@@ -188,7 +390,7 @@ Cada cambio queda registrado en un historial de trazabilidad (`HistorialEstadoRe
 ```json
 {
   "count": 45,
-  "next": "http://localhost:8000/api/reportes/?page=2",
+  "next": "http://localhost:8000/api/reportes/?page=1",
   "previous": null,
   "results": [
     {
@@ -224,80 +426,3 @@ Para más detalles, consulta la documentación en:
 http://127.0.0.1:8000/api/docs/#/
 ```
 
-## Búsqueda por Nombre
-
-El sistema permite buscar entidades por nombre utilizando parámetros de consulta (query params). La búsqueda es:
-- Parcial (contiene el texto buscado)
-- No distingue entre mayúsculas y minúsculas
-- Ignora tildes y acentos
-
-### Endpoints con búsqueda por nombre:
-
-1. **Comunas**
-   ```
-   GET /comunas/?nombre=valor
-   GET /comunas/?ciudad_id=valor
-   GET /comunas/?ciudad_nombre=valor
-   ```
-   Ejemplos:
-   - `/comunas/?nombre=santiago` encontrará "Santiago", "Sántiago", "SANTIAGO", etc.
-   - `/comunas/?ciudad_id=1` encontrará todas las comunas de la ciudad con ID 1
-   - `/comunas/?ciudad_nombre=santiago` encontrará todas las comunas de la ciudad Santiago
-   - `/comunas/?ciudad_nombre=santiago&nombre=centro` encontrará las comunas de la ciudad Santiago que contengan "centro" en su nombre
-
-2. **Ciudades**
-   ```
-   GET /ciudades/?nombre=valor
-   GET /ciudades/?region_id=valor
-   GET /ciudades/?region_nombre=valor
-   ```
-   Ejemplos:
-   - `/ciudades/?nombre=santiago` encontrará "Santiago", "Sántiago", "SANTIAGO", etc.
-   - `/ciudades/?region_id=1` encontrará todas las ciudades de la región con ID 1
-   - `/ciudades/?region_nombre=metropolitana` encontrará todas las ciudades de la región Metropolitana
-   - `/ciudades/?region_nombre=metropolitana&nombre=santiago` encontrará las ciudades de la región Metropolitana que contengan "santiago" en su nombre
-
-3. **Regiones**
-   ```
-   GET /regiones/?nombre=valor
-   ```
-   Ejemplo: `/regiones/?nombre=metropolitana` encontrará "Metropolitana", "METROPOLITANA", etc.
-
-4. **Planes PPDA**
-   ```
-   GET /planes/?nombre=valor
-   GET /planes/?mes_reporte=valor
-   GET /planes/?anio=valor
-   GET /planes/?comuna_id=valor
-   ```
-   Ejemplos:
-   - `/planes/?nombre=descontaminacion` encontrará "Descontaminación", "DESCONTAMINACION", etc.
-   - `/planes/?mes_reporte=6` encontrará todos los planes con mes de reporte 6 (junio)
-   - `/planes/?anio=2024` encontrará todos los planes del año 2024
-   - `/planes/?comuna_id=1` encontrará todos los planes que incluyan la comuna con ID 1
-   - `/planes/?anio=2024&mes_reporte=6` encontrará todos los planes del año 2024 con mes de reporte 6
-   - `/planes/?comuna_id=1&nombre=santiago` encontrará todos los planes que incluyan la comuna con ID 1 y contengan "santiago" en su nombre
-
-5. **Organismos Responsables**
-   ```
-   GET /organismo-responsable/?nombre=valor
-   ```
-   Ejemplo: `/organismo-responsable/?nombre=ministerio` encontrará "Ministerio", "MINISTERIO", etc.
-
-6. **Medidas**
-   ```
-   GET /medidas/?nombre_corto=valor
-   GET /medidas/?referencia_pda=valor
-   GET /medidas/?plan_id=valor
-   GET /medidas/?organismo_id=valor
-   ```
-   Ejemplos:
-   - `/medidas/?nombre_corto=reduccion` encontrará medidas con "reducción" en su nombre corto
-   - `/medidas/?referencia_pda=PPDA-2024` encontrará medidas con referencia PDA que contengan "PPDA-2024"
-   - `/medidas/?plan_id=1` encontrará todas las medidas del plan PPDA con ID 1
-   - `/medidas/?organismo_id=2` encontrará todas las medidas asignadas al organismo con ID 2
-   - `/medidas/?plan_id=1&organismo_id=2` encontrará las medidas del plan con ID 1 que estén asignadas al organismo con ID 2
-
-### Notas:
-- Si no se proporciona el parámetro `nombre`, se devuelven todos los registros
-- La búsqueda es parcial (encuentra coincidencias en cualquier parte del nombre)
