@@ -1,7 +1,9 @@
 from django.db import models
 from django.contrib import admin
 from django.utils.timezone import now
-
+from django.db.models import Q
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class PlanPPDA(models.Model):
     """
@@ -17,18 +19,39 @@ class PlanPPDA(models.Model):
         help_text="Ingrese el nombre único del Plan, identificando claramente las comunas que corresponden."
         )
     mes_reporte = models.IntegerField(
-        help_text="Ingrese un valor"
+        help_text="Ingrese un valor",
+        validators=[MinValueValidator(1), MaxValueValidator(12)]
     )
     anio = models.IntegerField()
-
     comunas = models.ManyToManyField('Comuna', related_name='planes')
 
     def __str__(self):
         return self.nombre
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['nombre', 'anio', 'mes_reporte'],
+                name='unique_plan_nombre_anio_mes'
+            )
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.pk:  # Solo validar si el objeto ya existe
+            if Medida.objects.filter(plan=self).exists():
+                raise ValidationError(
+                    "No se puede eliminar este plan porque tiene medidas asociadas. "
+                    "Primero debe eliminar o reasignar las medidas."
+                )
+
+    def delete(self, *args, **kwargs):
+        self.clean()
+        super().delete(*args, **kwargs)
+
 class Region(models.Model):
     """
-    Representa una región administrativa del país.
+    Representa una región geográfica.
 
     Atributos:
         nombre (str): Nombre de la región.
@@ -37,6 +60,19 @@ class Region(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    def clean(self):
+        super().clean()
+        if self.pk:  # Solo validar si el objeto ya existe
+            if Ciudad.objects.filter(region=self).exists():
+                raise ValidationError(
+                    "No se puede eliminar esta región porque tiene ciudades asociadas. "
+                    "Primero debe eliminar o reasignar las ciudades."
+                )
+
+    def delete(self, *args, **kwargs):
+        self.clean()
+        super().delete(*args, **kwargs)
 
 class Ciudad(models.Model):
     """
@@ -47,10 +83,23 @@ class Ciudad(models.Model):
         region (ForeignKey): Región a la que pertenece la ciudad.
     """
     nombre = models.CharField(max_length=255)
-    region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="ciudades")
+    region = models.ForeignKey(Region, on_delete=models.PROTECT, related_name="ciudades")
 
     def __str__(self):
         return self.nombre
+
+    def clean(self):
+        super().clean()
+        if self.pk:  # Solo validar si el objeto ya existe
+            if Comuna.objects.filter(ciudad=self).exists():
+                raise ValidationError(
+                    "No se puede eliminar esta ciudad porque tiene comunas asociadas. "
+                    "Primero debe eliminar o reasignar las comunas."
+                )
+
+    def delete(self, *args, **kwargs):
+        self.clean()
+        super().delete(*args, **kwargs)
 
 class Comuna(models.Model):
     """
@@ -61,10 +110,26 @@ class Comuna(models.Model):
         ciudad (ForeignKey): Ciudad a la que pertenece la comuna.
     """
     nombre = models.CharField(max_length=255)
-    ciudad = models.ForeignKey('Ciudad', on_delete=models.CASCADE, related_name='comunas') 
+    ciudad = models.ForeignKey('Ciudad', on_delete=models.PROTECT, related_name='comunas') 
 
     def __str__(self):
         return self.nombre
+
+    def clean(self):
+        if self.pk: 
+            planes_asociados = self.planes.all()
+            if planes_asociados.exists():
+                raise ValidationError(
+                    "No se puede eliminar la comuna porque está asociada a uno o más planes PPDA."
+                )
+
+    def delete(self, *args, **kwargs):
+        planes_asociados = self.planes.all()
+        if planes_asociados.exists():
+            raise ValidationError(
+                "No se puede eliminar la comuna porque está asociada a uno o más planes PPDA."
+            )
+        super().delete(*args, **kwargs)
 
 class OrganismoResponsable(models.Model):
     """
@@ -78,20 +143,22 @@ class OrganismoResponsable(models.Model):
     def __str__(self):
         return self.nombre
 
+    def clean(self):
+        super().clean()
+        if self.pk:  # Solo validar si el objeto ya existe
+            if Medida.objects.filter(organismos=self).exists():
+                raise ValidationError(
+                    "No se puede eliminar este organismo porque tiene medidas asociadas. "
+                    "Primero debe eliminar o reasignar las medidas."
+                )
+
+    def delete(self, *args, **kwargs):
+        self.clean()
+        super().delete(*args, **kwargs)
+
 class Medida(models.Model):
     """
     Representa una medida contenida en el plan PPDA.
-
-    Atributos:
-        referencia_pda (str): Código o referencia del plan en el que se enmarca la medida.
-        nombre_corto (str): Nombre breve que identifica la medida.
-        descripcion (str): Descripción detallada de la medida.
-        indicador (str): Indicador que permite evaluar el cumplimiento de la medida.
-        formula_calculo (str): Fórmula usada para calcular el indicador.
-        frecuencia_reporte (str): Frecuencia con la que se debe reportar la medida.
-        tipo_medida (str): Indica si es una medida regulatoria o no regulatoria.
-        plazo (date): Fecha límite para la ejecución de la medida.
-        organismos (ManyToMany): Organismos responsables de la medida.
     """
     FRECUENCIA_CHOICES = [
         ('anual', 'Anual'),
@@ -112,7 +179,7 @@ class Medida(models.Model):
     frecuencia_reporte = models.CharField(max_length=50, choices=FRECUENCIA_CHOICES)
     tipo_medida = models.CharField(max_length=50, choices=TIPO_MEDIDA_CHOICES)
     plazo = models.DateField(blank=True, null=True)
-
+    plan = models.ForeignKey('PlanPPDA', on_delete=models.PROTECT, related_name='medidas', null=False, blank=False)
     organismos = models.ManyToManyField('OrganismoResponsable', related_name='medidas')
 
     def __str__(self):
@@ -140,8 +207,8 @@ class MedioVerificacion(models.Model):
 
     descripcion = models.TextField()
     tipo = models.CharField(max_length=50, choices=TIPO_MEDIO_CHOICES)
-    medida = models.ForeignKey('Medida', on_delete=models.CASCADE, related_name='medios_verificacion')
-    entidad_a_cargo = models.ForeignKey('Entidad', on_delete=models.SET_NULL, null=True, blank=True, related_name='medios_verificacion')
+    medida = models.ForeignKey('Medida', on_delete=models.PROTECT, related_name='medios_verificacion')
+    entidad_a_cargo = models.ForeignKey('Entidad', on_delete=models.PROTECT, null=True, blank=True, related_name='medios_verificacion')
 
     def __str__(self):
         return self.descripcion
@@ -174,12 +241,12 @@ class Reporte(models.Model):
     ]
     medida = models.ForeignKey(
         'Medida',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='reportes'
     )
     organismo = models.ForeignKey(
         'OrganismoResponsable',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='reportes'
     )
     fecha_envio = models.DateField(auto_now_add=True)
@@ -192,7 +259,7 @@ class Reporte(models.Model):
     )
     medio_verificacion = models.ForeignKey(
         'MedioVerificacion',
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name='reportes'
@@ -218,11 +285,9 @@ class HistorialEstadoReporte(models.Model):
     actualizado_por = models.CharField(max_length=100)
     fecha = models.DateTimeField(auto_now_add=True) 
 
-
     class Meta:
         verbose_name = "Historial de Cambio de Estado"
         verbose_name_plural = "Historiales de Cambios de Estado"
 
     def __str__(self):
         return f"{self.reporte.id}: {self.estado_anterior} → {self.estado_nuevo} ({self.fecha.date()})"
-
