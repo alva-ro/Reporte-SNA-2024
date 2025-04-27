@@ -4,8 +4,8 @@ on:
     branches: [main]
   push:
     branches: [dev, inclusion_ci]
-  
- jobs:
+
+jobs:
   build:
     runs-on: ubuntu-latest
     steps:
