@@ -27,4 +27,5 @@ jobs:
         pip install -r requirements.txt
     - name: Ejecutar pruebas
       run: |
+        echo "acceso con: $DB_USER"
         python manage.py test
