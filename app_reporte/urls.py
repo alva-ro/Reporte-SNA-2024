@@ -16,9 +16,8 @@ urlpatterns = [
     path('ciudades/<int:pk>/', CiudadDetailView.as_view(http_method_names=['get', 'put', 'delete']), name='ciudades'),
     path('organismo-responsable/<int:pk>/', OrganismoResponsableDetailView.as_view(http_method_names=['get', 'put', 'delete']), name='organismo-responsable'),
     path('organismo-responsable/', OrganismoResponsableView.as_view(http_method_names=['post', 'get']), name='organismo-responsable'),
-    path('reportes/', ReporteListView.as_view(), name='reportes'),
-    path('reportes/<int:id_reporte>/estado/', ReporteEstadoUpdateView.as_view(), name='actualizar-estado-reporte'),
-    path('reportes/', ReportesView.as_view(), name='reportes'),
+    path('reportes/', ReporteListView.as_view(), name='reportes'),  # ← Usamos este
+    path('reportes/<int:id_reporte>/estado/', ReporteEstadoUpdateView.as_view(), name='actualizar-estado-reporte'),    
     path('reporte/', ReporteView.as_view(http_method_names=['post']), name='reporte_create'),
     path('reporte/<int:id_reporte>', ReporteView.as_view(http_method_names=['get', 'put', 'delete']), name='reporte_detail'),
 ]

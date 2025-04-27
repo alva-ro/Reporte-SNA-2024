@@ -34,17 +34,6 @@ class PlanPPDASerializer(serializers.ModelSerializer):
             'id': {'read_only': True}
         }
 
-    def validate(self, data):
-        current_year = datetime.now().year
-        current_month = datetime.now().month
-        
-        if data['anio'] == current_year and data['mes_reporte'] > current_month:
-            raise serializers.ValidationError(
-                "El mes del reporte no puede ser futuro para el año actual"
-            )
-        
-        return data
-    
     def validate_comunas(self, value):
         """Valida que las comunas existan"""
         if not value:
@@ -81,6 +70,15 @@ class MedidaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medida
         fields = '__all__'
+        extra_kwargs = {
+            'id': {'read_only': True}
+        }
+
+    def validate_plan(self, value):
+        """Valida que el plan exista"""
+        if not value:
+            raise serializers.ValidationError("Debe especificar un plan PPDA")
+        return value
 
 class MedioVerificacionSerializer(serializers.ModelSerializer):
     class Meta:
