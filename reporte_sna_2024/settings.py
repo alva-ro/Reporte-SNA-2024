@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'reporte_sna_2024.wsgi.application'
 
 DATABASES = {
     "default": {
-             'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.getenv('DB_NAME', 'sna_report'),
         'USER': os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),

@@ -3,7 +3,6 @@ from app_reporte.models import Region, Ciudad, Comuna
 from app_reporte.models import OrganismoResponsable, Medida, MedioVerificacion, Reporte
 from django.contrib.auth.models import User
 import json
-# Create your tests here.
 
 class LocalidadTest(TestCase):
     def setUp(self):
@@ -172,4 +171,4 @@ class LocalidadTest(TestCase):
     def test_delete_region_no_token(self):
         # Intentar eliminar región sin token
         respuesta = self.client.delete('/api/regiones/1/', **self.headers_sin_token)
-        self.assertEqual(respuesta.status_code, 401)
+        self.assertEqual(respuesta.status_code, 401) 
