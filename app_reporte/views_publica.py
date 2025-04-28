@@ -1,4 +1,4 @@
-# app_reporte/views_publica.py
+# app_reporte/views_publica.py.
 
 from rest_framework import generics
 from .models import ReporteAnual, ElementoProbatorio
