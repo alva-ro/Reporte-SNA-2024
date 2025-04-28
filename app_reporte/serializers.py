@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import (PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable, Medida, MedioVerificacion, Entidad, Reporte,)
+from .models import (PlanPPDA, Comuna, Region, Ciudad, OrganismoResponsable, Medida, MedioVerificacion, Entidad, Reporte, ReporteAnual, ElementoProbatorio,)
 from datetime import datetime
 from .models import Reporte
 
@@ -95,3 +95,15 @@ class ReporteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reporte
         fields = '__all__'
+
+# Serializer para API pública de reportes anuales
+class ReporteAnualSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReporteAnual
+        fields = '__all__',
+
+# Serializer para API pública de elementos probatorios
+class ElementoProbatorioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ElementoProbatorio
+        fields = '__all__',

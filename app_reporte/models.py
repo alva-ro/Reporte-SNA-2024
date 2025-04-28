@@ -203,3 +203,27 @@ class Reporte(models.Model):
     )
     def __str__(self):
         return f"Reporte de {self.organismo} sobre {self.medida} - {self.fecha_envio}"
+
+class ReporteAnual(models.Model):
+    nombre_plan = models.CharField(max_length=255)
+    responsable_plan = models.CharField(max_length=255)
+    fecha_plan = models.DateField()
+    estado_plan = models.CharField(max_length=100)
+    zona = models.CharField(max_length=255)  # (Concón, Quintero, Puchuncaví)
+    reporte_entregado = models.BooleanField(default=False)  # Si entregaron o no reporte ese año
+    region = models.CharField(max_length=255)
+    ciudad = models.CharField(max_length=255)
+    comuna = models.CharField(max_length=255)
+    medida = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.nombre_plan} ({self.fecha_plan})"
+        
+class ElementoProbatorio(models.Model):
+    descripcion = models.TextField()
+    url_documento = models.URLField(max_length=500)  # Enlace al documento oficial
+    reporte_anual = models.ForeignKey(ReporteAnual, on_delete=models.CASCADE, related_name='elementos_probatorios')
+    medio_de_verificacion = models.CharField(max_length=255, blank=True, null=True) #Informe, Fotografía, Resolución, etc
+    
+    def __str__(self):
+        return self.descripcion

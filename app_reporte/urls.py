@@ -2,6 +2,7 @@ from django.urls import path
 from .views import PlanPPDAView, ComunaView, RegionView, CiudadView, OrganismoResponsableView, RegionDetailView, \
       CiudadDetailView, ComunaDetailView, OrganismoResponsableDetailView, PlanPPDADetailView, ReporteEstadoUpdateView, ReporteListView, \
       ReportesView, ReporteView, MedidaView, MedidaDetailView
+from . import views, views_publica
 
 urlpatterns = [
     path('planes/', PlanPPDAView.as_view(http_method_names=['post', 'get']), name='planes'),
@@ -21,4 +22,8 @@ urlpatterns = [
     path('reportes/', ReportesView.as_view(), name='reportes'),
     path('reporte/', ReporteView.as_view(http_method_names=['post']), name='reporte_create'),
     path('reporte/<int:id_reporte>', ReporteView.as_view(http_method_names=['get', 'put', 'delete']), name='reporte_detail'),
+    # API públicas
+    path('reporteanual/', views_publica.ReporteAnualList.as_view(), name='reporteanual_list'),
+    path('elementoprobatorio/', views_publica.ElementoProbatorioList.as_view(), name='elementoprobatorio_list'),
+
 ]
