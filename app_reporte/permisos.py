@@ -55,3 +55,11 @@ class EsSuperAdminOSoloLectura(permissions.BasePermission):
             return True
 
         return request.user and request.user.is_superuser
+
+class EsSuperAdmin(permissions.BasePermission):
+    """
+    Define un permiso solo para superadministradores.
+    No permite acceso a ningún otro tipo de usuario.
+    """
+    def has_permission(self, request, view):
+        return request.user and request.user.is_superuser
