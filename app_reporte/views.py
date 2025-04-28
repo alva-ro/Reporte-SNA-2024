@@ -20,7 +20,11 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework import generics
 from app_reporte.models import Reporte
 from app_reporte.serializers import ReporteSerializer
+from django.contrib.auth import get_user_model
 import unicodedata
+
+
+User = get_user_model()
 
 
 def normalizar_texto(texto):
@@ -800,11 +804,14 @@ class ReporteListView(generics.ListAPIView):
 
     def get(self, request):
         queryset = Reporte.objects.all()
-
+        #si no es superusuario, solo sus reportes
+        if not request.user.is_superuser:
+            mis_orgs = request.user.groups.first().organismoresponsable_set.all()
+            queryset = queryset.filter(organismo__in=mis_orgs)
         organismo_id = request.GET.get('organismo')
         estado = request.GET.get('estado')
         fecha_envio = request.GET.get('fecha_envio')
-        ordering = request.GET.get('ordering')  
+        ordering = request.GET.get('ordering')
 
         # Filtros con validación
         if organismo_id:
@@ -876,6 +883,7 @@ class ReporteEstadoUpdateView(APIView):
 
         estado_anterior = reporte.estado
         reporte.estado = nuevo_estado
+        reporte.updated_by = request.user
         reporte.save()
 
         # Registro de trazabilidad
@@ -955,9 +963,9 @@ class ReporteView(APIView):
     permission_classes = [EsRepOrgResOSoloLectura]
 
     def post(self, request):
-        serializer = ReporteSerializer(data=request.data)
+        serializer = ReporteSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(created_by=request.user, updated_by=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -972,9 +980,9 @@ class ReporteView(APIView):
         if not id_reporte:
             raise BadRequest("Se requiere un ID de reporte para esta operacion.")
         reporte = get_object_or_404(Reporte, id=id_reporte)
-        serializer = ReporteSerializer(reporte, data=request.data, partial=True)
+        serializer = ReporteSerializer(reporte, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(updated_by=request.user)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

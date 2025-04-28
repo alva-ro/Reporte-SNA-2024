@@ -89,10 +89,10 @@ WSGI_APPLICATION = 'reporte_sna_2024.wsgi.application'
 DATABASES = {
     "default": {
              'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'sna_report'),
-        'USER': os.getenv('DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
-        'HOST': os.getenv('DB_HOST', 'postgres'),
+        'NAME': os.getenv('DB_NAME', 'sna_report_clean'),
+        'USER': os.getenv('DB_USER', 'corfo'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'corfo'),
+        'HOST': os.getenv('DB_HOST', '144.126.142.202'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
