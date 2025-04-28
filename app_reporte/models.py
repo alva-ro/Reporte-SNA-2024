@@ -1,9 +1,36 @@
+# app_reporte/models.py
+
 from django.db import models
 from django.contrib import admin
 from django.utils.timezone import now
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.conf import settings
+
+
+class TimeStampedModel(models.Model):
+    """
+    Modelo base abstracto que añade campos de auditoría.
+    """
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True,     null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="%(class)s_created"
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="%(class)s_updated"
+    )
+
+    class Meta:
+        abstract = True
+
 
 class PlanPPDA(models.Model):
     """
@@ -13,11 +40,10 @@ class PlanPPDA(models.Model):
     - `mes_reporte`: Mes en el que se debe reportar el avance.
     - `anio`: Año del plan.
     """
-
     nombre = models.CharField(
         max_length=255,
         help_text="Ingrese el nombre único del Plan, identificando claramente las comunas que corresponden."
-        )
+    )
     mes_reporte = models.IntegerField(
         help_text="Ingrese un valor",
         validators=[MinValueValidator(1), MaxValueValidator(12)]
@@ -49,6 +75,7 @@ class PlanPPDA(models.Model):
         self.clean()
         super().delete(*args, **kwargs)
 
+
 class Region(models.Model):
     """
     Representa una región geográfica.
@@ -63,7 +90,7 @@ class Region(models.Model):
 
     def clean(self):
         super().clean()
-        if self.pk:  # Solo validar si el objeto ya existe
+        if self.pk:  # Solo validar si el objeto ya exista
             if Ciudad.objects.filter(region=self).exists():
                 raise ValidationError(
                     "No se puede eliminar esta región porque tiene ciudades asociadas. "
@@ -73,6 +100,7 @@ class Region(models.Model):
     def delete(self, *args, **kwargs):
         self.clean()
         super().delete(*args, **kwargs)
+
 
 class Ciudad(models.Model):
     """
@@ -101,6 +129,7 @@ class Ciudad(models.Model):
         self.clean()
         super().delete(*args, **kwargs)
 
+
 class Comuna(models.Model):
     """
     Representa una comuna dentro de una ciudad.
@@ -110,13 +139,13 @@ class Comuna(models.Model):
         ciudad (ForeignKey): Ciudad a la que pertenece la comuna.
     """
     nombre = models.CharField(max_length=255)
-    ciudad = models.ForeignKey('Ciudad', on_delete=models.PROTECT, related_name='comunas') 
+    ciudad = models.ForeignKey('Ciudad', on_delete=models.PROTECT, related_name='comunas')
 
     def __str__(self):
         return self.nombre
 
     def clean(self):
-        if self.pk: 
+        if self.pk:
             planes_asociados = self.planes.all()
             if planes_asociados.exists():
                 raise ValidationError(
@@ -130,6 +159,7 @@ class Comuna(models.Model):
                 "No se puede eliminar la comuna porque está asociada a uno o más planes PPDA."
             )
         super().delete(*args, **kwargs)
+
 
 class OrganismoResponsable(models.Model):
     """
@@ -145,7 +175,7 @@ class OrganismoResponsable(models.Model):
 
     def clean(self):
         super().clean()
-        if self.pk:  # Solo validar si el objeto ya existe
+        if self.pk:  # Solo validar si el objeto ya exista
             if Medida.objects.filter(organismos=self).exists():
                 raise ValidationError(
                     "No se puede eliminar este organismo porque tiene medidas asociadas. "
@@ -155,6 +185,7 @@ class OrganismoResponsable(models.Model):
     def delete(self, *args, **kwargs):
         self.clean()
         super().delete(*args, **kwargs)
+
 
 class Medida(models.Model):
     """
@@ -185,6 +216,7 @@ class Medida(models.Model):
     def __str__(self):
         return self.nombre_corto
 
+
 class MedioVerificacion(models.Model):
     """
     Representa el medio por el cual se verifica el cumplimiento de una medida.
@@ -213,6 +245,7 @@ class MedioVerificacion(models.Model):
     def __str__(self):
         return self.descripcion
 
+
 class Entidad(models.Model):
     """
     Representa una entidad institucional que puede estar a cargo de medios de verificación.
@@ -225,7 +258,8 @@ class Entidad(models.Model):
     def __str__(self):
         return self.nombre
 
-class Reporte(models.Model):
+
+class Reporte(TimeStampedModel):
     """
     Modelo para representar el reporte que un organismo responsable sube como avance de un plan.
 
@@ -264,26 +298,34 @@ class Reporte(models.Model):
         blank=True,
         related_name='reportes'
     )
-
     estado = models.CharField(
         max_length=20,
         choices=ESTADOS_REPORTE,
         default='pendiente'
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['medida', 'organismo', 'fecha_envio'],
+                name='unique_reporte_medida_organismo_fecha'
+            )
+        ]
+
     def __str__(self):
         return f"Reporte de {self.organismo} sobre {self.medida} - {self.fecha_envio}"
-    
-class HistorialEstadoReporte(models.Model):
+
+
+class HistorialEstadoReporte(TimeStampedModel):
     """
     Registra los cambios de estado de los reportes para mantener trazabilidad.
     Guarda el estado anterior, el nuevo, quién lo modificó y cuándo.
     """
-    
     reporte = models.ForeignKey(Reporte, on_delete=models.CASCADE)
     estado_anterior = models.CharField(max_length=20)
     estado_nuevo = models.CharField(max_length=20)
     actualizado_por = models.CharField(max_length=100)
-    fecha = models.DateTimeField(auto_now_add=True) 
+    fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Historial de Cambio de Estado"
