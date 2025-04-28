@@ -100,10 +100,10 @@ class ReporteSerializer(serializers.ModelSerializer):
 class ReporteAnualSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReporteAnual
-        fields = '__all__',
+        fields = '__all__'
 
 # Serializer para API pública de elementos probatorios
 class ElementoProbatorioSerializer(serializers.ModelSerializer):
     class Meta:
         model = ElementoProbatorio
-        fields = '__all__',
+        fields = '__all__'
