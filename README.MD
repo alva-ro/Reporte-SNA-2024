@@ -411,16 +411,22 @@ Cada cambio queda registrado en un historial de trazabilidad (`HistorialEstadoRe
 ---
 
 ## Información entrega 3
-En esta tercera entrega nuestro foco principal mejorar el manejo de roles para los distintos endpoints existentes, además de agregar validaciones que permitan mantener la integridad de los datos. Además, se integró el filtrado de endpoints para obtener de manera más optima la información. 
+En esta tercera entrega nuestro foco principal fue mejorar el manejo de roles para los distintos endpoints existentes y agregar validaciones que permitan mantener la integridad de los datos. Además, se integró el filtrado de endpoints para obtener de manera más optima la información. 
 
-## Próximos pasos
-1. Documentar el proceso de autenticación y autorización para los administradores.
-2. Integrar rate limiting.
-3. Agregar trazabilidad completa al historial de cambios.
-4. Incorporar tests automáticos.
+## En esta entrega encontrarás
+1. Pruebas unitarias para la Integración Continua.
+2. Mejoras en el modelo de datos para integrar información de auditoría en models sensibles.
+3. Github Actions: se implementó seguridad y manejo en el control de versiones para asegurar la integridad del código en ramas Dev y Main.
+4. Despliegue continuo: desplegamos nuestra Web App en Render. Puedes revisar a detalle en el siguiente link: https://reporte-sna-2024.onrender.com/api/docs/#/. Para el depsliegue continuo se instalan todos los requerimientos necesarios para la aplicación, se ejecutan las migraciones y luego se compila el código con gunicorn y uvicorn. 
+
+##📄 Deploy de proyecto en Render
+Aplicación: reporte_sna_2024
+Framework: Django 5 + Django REST Framework
+Proveedor: Render.com
+Fecha de deploy: 28-04-2025
 
 Para más detalles, consulta la documentación en:
 ```
-http://127.0.0.1:8000/api/docs/#/
+https://reporte-sna-2024.onrender.com/api/docs/#/
 ```
 
